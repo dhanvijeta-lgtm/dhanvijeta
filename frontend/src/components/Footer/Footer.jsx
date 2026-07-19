@@ -9,8 +9,11 @@ export function Footer() {
         
         {/* BRAND COLUMN */}
         <div className="flex flex-col gap-4">
-          <Link to="/" className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500">
-            DHAN VIJETA
+          <Link to="/" className="flex items-center gap-3 group">
+            <img src="/logo.png" alt="Dhan Vijeta Logo" className="h-9 w-auto object-contain transition-transform group-hover:scale-105" />
+            <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500">
+              DHAN VIJETA
+            </span>
           </Link>
           <p className="text-sm text-gray-400 leading-relaxed">
             Empowering retail traders and investors with deep, structured, and actionable financial education. Learn Price Action, Trading Psychology, Options, Futures, and Wealth Management.

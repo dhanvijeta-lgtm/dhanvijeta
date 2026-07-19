@@ -29,13 +29,20 @@ export function Navbar({ onOpenLogin }) {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* LOGO */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-black tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500">
-            DHAN VIJETA
-          </span>
-          <span className="text-[10px] uppercase font-bold text-finance-emerald border border-finance-emerald/30 rounded px-1 py-0.5 tracking-wider hidden sm:inline">
-            EdTech
-          </span>
+        <Link to="/" className="flex items-center gap-3 group">
+          <img
+            src="/logo.png"
+            alt="Dhan Vijeta Logo"
+            className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-black tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500">
+              DHAN VIJETA
+            </span>
+            <span className="text-[10px] uppercase font-bold text-finance-emerald border border-finance-emerald/30 rounded px-1 py-0.5 tracking-wider hidden sm:inline">
+              EdTech
+            </span>
+          </div>
         </Link>
 
         {/* DESKTOP NAV LINKS */}
