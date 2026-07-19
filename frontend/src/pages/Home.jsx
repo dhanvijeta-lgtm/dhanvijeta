@@ -79,7 +79,7 @@ export function Home() {
           transition={{ duration: 0.8 }}
           className="space-y-6"
         >
-          <span className="bg-finance-gold/10 text-finance-gold border border-finance-gold/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+          <span className="bg-[#2962FF]/15 text-[#3b82f6] border border-[#2962FF]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(41,98,255,0.25)]">
             Premium Stock Market Academy
           </span>
 
