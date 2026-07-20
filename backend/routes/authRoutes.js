@@ -13,6 +13,7 @@ const {
 router.post('/register', validate(registerSchema), authController.register);
 router.post('/login', validate(loginSchema), authController.login);
 router.post('/google', authController.googleAuth);
+router.get('/google/callback', authController.googleCallback);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/logout', authController.logout);
 router.get('/verify-email', authController.verifyEmail);

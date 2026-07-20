@@ -12,14 +12,32 @@ export const AuthProvider = ({ children }) => {
   // Restore session and fetch user wishlist on mount
   useEffect(() => {
     const initializeAuth = async () => {
+      // Handle OAuth redirect token or error params in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token');
+      const urlError = urlParams.get('error');
+
+      if (urlError) {
+        toast.error(`Authentication failed: ${decodeURIComponent(urlError)}`);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (urlToken) {
+        localStorage.setItem('accessToken', urlToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        toast.success('Logged in successfully!');
+      }
+
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
           const profileRes = await client.get('/auth/profile');
           setUser(profileRes.data.data.user);
           
-          const wishlistRes = await client.get('/wishlists');
-          setWishlist(wishlistRes.data.data.map(c => c._id) || []);
+          try {
+            const wishlistRes = await client.get('/wishlists');
+            setWishlist(wishlistRes.data.data.map(c => c._id) || []);
+          } catch (wErr) {
+            console.warn('Wishlist restoration failed:', wErr.message);
+          }
         } catch (err) {
           console.error('Session restoration failed:', err.message);
           localStorage.removeItem('accessToken');

@@ -28,18 +28,23 @@ const register = async (req, res, next) => {
   }
 };
 
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  };
+};
+
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await authService.loginUser(email, password);
 
     // Set refresh token in HttpOnly cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
 
     return response.success(
       res,
@@ -72,12 +77,7 @@ const refreshToken = async (req, res, next) => {
     const { accessToken, refreshToken: newRefreshToken, user } = await authService.refreshAccessToken(token);
 
     // Reset cookie
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('refreshToken', newRefreshToken, getCookieOptions());
 
     return response.success(res, {
       accessToken,
@@ -99,7 +99,9 @@ const logout = async (req, res, next) => {
     const token = req.cookies?.refreshToken || req.body.refreshToken;
     await authService.logoutUser(token);
     
-    res.clearCookie('refreshToken');
+    const cookieOpts = getCookieOptions();
+    delete cookieOpts.maxAge;
+    res.clearCookie('refreshToken', cookieOpts);
     return response.success(res, null, 'Logged out successfully');
   } catch (error) {
     next(error);
@@ -254,14 +256,12 @@ const updateProfile = async (req, res, next) => {
 const googleAuth = async (req, res, next) => {
   try {
     const { idToken, accessToken } = req.body;
+    console.log('[Google Auth Debug] Direct authentication request received');
     const { user, accessToken: token, refreshToken } = await authService.googleLoginUser({ idToken, accessToken });
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
+
+    console.log(`[Google Auth Debug] Authentication successful for user: ${user.email}`);
 
     return response.success(
       res,
@@ -279,7 +279,37 @@ const googleAuth = async (req, res, next) => {
       'Google authentication successful'
     );
   } catch (error) {
+    console.error('[Google Auth Debug] googleAuth error:', error.message);
     next(error);
+  }
+};
+
+const googleCallback = async (req, res, next) => {
+  try {
+    const { code, error } = req.query;
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+
+    if (error) {
+      console.error('[Google Auth Debug] OAuth Callback error from Google:', error);
+      return res.redirect(`${clientUrl}?error=${encodeURIComponent(error)}`);
+    }
+
+    if (!code) {
+      console.error('[Google Auth Debug] OAuth Callback missing code param');
+      return res.redirect(`${clientUrl}?error=MissingAuthorizationCode`);
+    }
+
+    console.log('[Google Auth Debug] OAuth Callback code exchange started');
+    const { user, accessToken: token, refreshToken } = await authService.googleCallbackCodeExchange(code);
+
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
+
+    console.log(`[Google Auth Debug] OAuth Callback successful. Redirecting to frontend: ${clientUrl}`);
+    return res.redirect(`${clientUrl}?token=${token}`);
+  } catch (error) {
+    console.error('[Google Auth Debug] OAuth Callback exception:', error.message);
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+    return res.redirect(`${clientUrl}?error=${encodeURIComponent(error.message)}`);
   }
 };
 
@@ -287,6 +317,7 @@ module.exports = {
   register,
   login,
   googleAuth,
+  googleCallback,
   refreshToken,
   logout,
   verifyEmail,

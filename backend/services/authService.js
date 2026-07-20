@@ -162,10 +162,24 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
   return { user, accessToken: newAccessToken, refreshToken };
 };
 
+const googleCallbackCodeExchange = async (code, customRedirectUri) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const callbackUrl = customRedirectUri || process.env.GOOGLE_CALLBACK_URL;
+
+  console.log('[Google Auth Debug] Initiating code exchange. Callback URL:', callbackUrl);
+
+  const client = new OAuth2Client(clientId, clientSecret, callbackUrl);
+  const { tokens } = await client.getToken(code);
+  
+  return await googleLoginUser({ idToken: tokens.id_token, accessToken: tokens.access_token });
+};
+
 module.exports = {
   registerUser,
   loginUser,
   googleLoginUser,
+  googleCallbackCodeExchange,
   refreshAccessToken,
   logoutUser,
   generateAccessToken,
