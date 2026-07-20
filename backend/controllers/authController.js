@@ -8,19 +8,24 @@ const response = require('../helpers/response');
 const register = async (req, res, next) => {
   try {
     const user = await authService.registerUser(req.body);
+    const { accessToken, refreshToken } = await authService.loginUser(req.body.email, req.body.password);
     
-    // Generate verification token
-    const token = crypto.randomBytes(20).toString('hex');
-    user.verificationToken = token;
-    await user.save();
-
-    // Trigger email send
-    await emailService.sendVerificationEmail(user.email, token);
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
 
     return response.success(
       res,
-      { id: user._id, name: user.name, email: user.email, role: user.role },
-      'Registration successful. Please check your email to verify your account.',
+      {
+        accessToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          streakCount: user.streakCount,
+          isVerified: user.isVerified
+        }
+      },
+      'Registration successful!',
       201
     );
   } catch (error) {

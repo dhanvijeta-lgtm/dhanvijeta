@@ -80,8 +80,14 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      await client.post('/auth/register', { name, email, password });
-      toast.success('Registration successful! Please check your email for verification.');
+      const res = await client.post('/auth/register', { name, email, password });
+      const { accessToken, user: userData } = res.data.data;
+      
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        setUser(userData);
+      }
+      toast.success(`Welcome, ${userData?.name || 'User'}!`);
       return true;
     } catch (err) {
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Registration failed');

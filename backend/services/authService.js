@@ -30,7 +30,7 @@ const registerUser = async (userData) => {
     email,
     password,
     role: role || 'student',
-    isVerified: false // We can mock verification token if SMTP is unset
+    isVerified: true
   });
 
   return user;

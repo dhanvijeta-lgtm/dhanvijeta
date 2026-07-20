@@ -81,7 +81,7 @@ export function LoginModal({ isOpen, onClose }) {
     setSubmitting(true);
     const success = await register(data.name, data.email, data.password);
     setSubmitting(false);
-    if (success) setActiveTab('login');
+    if (success) onClose();
   };
 
   const onForgot = async (data) => {
