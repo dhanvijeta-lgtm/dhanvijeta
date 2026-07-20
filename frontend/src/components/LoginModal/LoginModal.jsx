@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../store/authContext';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { FaGoogle, FaEnvelope, FaLock, FaUser, FaTimes } from 'react-icons/fa';
 
@@ -42,6 +42,18 @@ export function LoginModal({ isOpen, onClose }) {
   const handleGoogleError = () => {
     toast.error('Google Sign-In failed or was cancelled.');
   };
+
+  const customGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      if (tokenResponse?.access_token) {
+        setSubmitting(true);
+        const success = await googleLogin({ accessToken: tokenResponse.access_token });
+        setSubmitting(false);
+        if (success) onClose();
+      }
+    },
+    onError: handleGoogleError
+  });
 
   // Forms configurations
   const { register: regLogin, handleSubmit: handleLoginSubmit, formState: { errors: loginErrors } } = useForm({
@@ -118,7 +130,7 @@ export function LoginModal({ isOpen, onClose }) {
 
         {/* GOOGLE SIGN IN */}
         {activeTab !== 'forgot' && (
-          <div className="mb-6 flex flex-col items-center">
+          <div className="mb-6 flex flex-col items-center gap-2">
             <div className="w-full flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -126,10 +138,17 @@ export function LoginModal({ isOpen, onClose }) {
                 theme="filled_dark"
                 shape="pill"
                 text={activeTab === 'register' ? 'signup_with' : 'signin_with'}
-                width="100%"
+                width="350"
               />
             </div>
-            <div className="w-full flex items-center my-5 text-gray-500 text-xs uppercase before:content-[''] before:flex-1 before:border-b before:border-white/10 before:mr-3 after:content-[''] after:flex-1 after:border-b after:border-white/10 after:ml-3">
+            <button
+              type="button"
+              onClick={() => customGoogleLogin()}
+              className="text-xs text-gray-400 hover:text-finance-gold transition underline mt-1"
+            >
+              Having trouble? Click here for Google Popup
+            </button>
+            <div className="w-full flex items-center my-3 text-gray-500 text-xs uppercase before:content-[''] before:flex-1 before:border-b before:border-white/10 before:mr-3 after:content-[''] after:flex-1 after:border-b after:border-white/10 after:ml-3">
               Or
             </div>
           </div>

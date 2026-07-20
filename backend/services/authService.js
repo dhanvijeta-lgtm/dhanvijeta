@@ -94,21 +94,44 @@ const logoutUser = async (refreshToken) => {
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com');
 
-const googleLoginUser = async (idToken) => {
-  if (!idToken) {
-    throw new Error('Google ID token is required');
+const googleLoginUser = async ({ idToken, accessToken }) => {
+  if (!idToken && !accessToken) {
+    throw new Error('Google authentication token is required');
   }
 
-  const ticket = await googleClient.verifyIdToken({
-    idToken,
-    audience: process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
-  });
+  let googleId, email, name;
 
-  const payload = ticket.getPayload();
-  const { sub: googleId, email, name } = payload;
+  if (idToken) {
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
+      });
+      const payload = ticket.getPayload();
+      googleId = payload.sub;
+      email = payload.email;
+      name = payload.name;
+    } catch (verErr) {
+      console.warn('Google ID token verification failed, checking access token fallback:', verErr.message);
+    }
+  }
+
+  if (!email && accessToken) {
+    try {
+      const res = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      if (res.ok) {
+        const data = await res.json();
+        googleId = data.sub;
+        email = data.email;
+        name = data.name;
+      }
+    } catch (fetchErr) {
+      console.warn('Google userinfo fetch failed:', fetchErr.message);
+    }
+  }
 
   if (!email) {
-    throw new Error('Google authentication failed: Email not provided by Google');
+    throw new Error('Google authentication failed: Could not verify Google user identity.');
   }
 
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -125,14 +148,14 @@ const googleLoginUser = async (idToken) => {
     });
   }
 
-  const accessToken = generateAccessToken(user);
+  const newAccessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
   user.refreshToken = refreshToken;
   user.lastActiveDate = new Date();
   await user.save();
 
-  return { user, accessToken, refreshToken };
+  return { user, accessToken: newAccessToken, refreshToken };
 };
 
 module.exports = {

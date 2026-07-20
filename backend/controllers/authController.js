@@ -253,8 +253,8 @@ const updateProfile = async (req, res, next) => {
 
 const googleAuth = async (req, res, next) => {
   try {
-    const { idToken } = req.body;
-    const { user, accessToken, refreshToken } = await authService.googleLoginUser(idToken);
+    const { idToken, accessToken } = req.body;
+    const { user, accessToken: token, refreshToken } = await authService.googleLoginUser({ idToken, accessToken });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -266,7 +266,7 @@ const googleAuth = async (req, res, next) => {
     return response.success(
       res,
       {
-        accessToken,
+        accessToken: token,
         user: {
           id: user._id,
           name: user.name,

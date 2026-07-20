@@ -117,9 +117,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const googleLogin = async (idToken) => {
+  const googleLogin = async (tokenData) => {
     try {
-      const res = await client.post('/auth/google', { idToken });
+      const payload = typeof tokenData === 'string' ? { idToken: tokenData } : tokenData;
+      const res = await client.post('/auth/google', payload);
       const { accessToken, user: userData } = res.data.data;
       
       localStorage.setItem('accessToken', accessToken);
