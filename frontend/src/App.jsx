@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './store/authContext';
 
 // Components
@@ -108,24 +109,28 @@ function LayoutWrapper() {
 }
 
 export function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <LayoutWrapper />
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: '#0B132B',
-                color: '#fff',
-                border: '1px solid rgba(255, 255, 255, 0.05)'
-              }
-            }}
-          />
-        </AuthProvider>
-      </Router>
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <AuthProvider>
+            <LayoutWrapper />
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: '#0B132B',
+                  color: '#fff',
+                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                }
+              }}
+            />
+          </AuthProvider>
+        </Router>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 

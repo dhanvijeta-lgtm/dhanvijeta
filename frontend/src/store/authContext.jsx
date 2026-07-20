@@ -117,6 +117,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (idToken) => {
+    try {
+      const res = await client.post('/auth/google', { idToken });
+      const { accessToken, user: userData } = res.data.data;
+      
+      localStorage.setItem('accessToken', accessToken);
+      setUser(userData);
+      
+      try {
+        const wishlistRes = await client.get('/wishlists');
+        setWishlist(wishlistRes.data.data.map(c => c._id) || []);
+      } catch (wErr) {
+        console.warn('Could not fetch wishlist:', wErr);
+      }
+
+      toast.success(`Welcome, ${userData.name}!`);
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Google authentication failed');
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -127,6 +150,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin: user?.role === 'admin',
         login,
         register,
+        googleLogin,
         logout,
         updateProfile,
         toggleWishlist

@@ -18,7 +18,14 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required']
+      required: function() {
+        return !this.googleId;
+      }
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true
     },
     role: {
       type: String,
@@ -64,6 +71,7 @@ userSchema.pre('save', async function (next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function (enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

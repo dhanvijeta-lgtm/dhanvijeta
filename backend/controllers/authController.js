@@ -251,9 +251,42 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const googleAuth = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    const { user, accessToken, refreshToken } = await authService.googleLoginUser(idToken);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return response.success(
+      res,
+      {
+        accessToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          streakCount: user.streakCount,
+          isVerified: user.isVerified
+        }
+      },
+      'Google authentication successful'
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleAuth,
   refreshToken,
   logout,
   verifyEmail,

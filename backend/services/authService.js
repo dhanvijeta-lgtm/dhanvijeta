@@ -91,9 +91,54 @@ const logoutUser = async (refreshToken) => {
   }
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com');
+
+const googleLoginUser = async (idToken) => {
+  if (!idToken) {
+    throw new Error('Google ID token is required');
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
+  });
+
+  const payload = ticket.getPayload();
+  const { sub: googleId, email, name } = payload;
+
+  if (!email) {
+    throw new Error('Google authentication failed: Email not provided by Google');
+  }
+
+  let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+  if (user) {
+    if (!user.googleId) user.googleId = googleId;
+    if (!user.isVerified) user.isVerified = true;
+  } else {
+    user = await User.create({
+      name: name || email.split('@')[0],
+      email,
+      googleId,
+      isVerified: true
+    });
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  user.refreshToken = refreshToken;
+  user.lastActiveDate = new Date();
+  await user.save();
+
+  return { user, accessToken, refreshToken };
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  googleLoginUser,
   refreshAccessToken,
   logoutUser,
   generateAccessToken,
