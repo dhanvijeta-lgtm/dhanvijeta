@@ -134,7 +134,11 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
     throw new Error('Google authentication failed: Could not verify Google user identity.');
   }
 
-  let user = await User.findOne({ $or: [{ googleId }, { email }] });
+  const queryConditions = [];
+  if (googleId) queryConditions.push({ googleId });
+  if (email) queryConditions.push({ email });
+
+  let user = queryConditions.length > 0 ? await User.findOne({ $or: queryConditions }) : null;
 
   if (user) {
     if (!user.googleId) user.googleId = googleId;

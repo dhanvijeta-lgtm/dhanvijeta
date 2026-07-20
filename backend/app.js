@@ -29,6 +29,7 @@ app.use((req, res, next) => {
 
 // Security headers
 app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   crossOriginResourcePolicy: false // Allows loading local image previews if needed
 }));
 
