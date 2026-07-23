@@ -44,7 +44,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or same-origin)
       if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
         callback(null, true);
       } else {
@@ -65,6 +64,20 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static uploads if using local storage fallback
 app.use('/uploads', express.static('uploads'));
 
+// Health check handler helper
+const getHealthStatus = () => ({
+  success: true,
+  message: 'Dhan Vijeta Backend API is Running',
+  version: '1.0.0',
+  environment: process.env.NODE_ENV || 'development',
+  timestamp: new Date().toISOString()
+});
+
+// Root & Health Check Endpoints
+app.get('/', (req, res) => res.status(200).json(getHealthStatus()));
+app.get('/health', (req, res) => res.status(200).json(getHealthStatus()));
+app.get('/api/health', (req, res) => res.status(200).json(getHealthStatus()));
+
 // Rate Limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -79,6 +92,15 @@ app.use('/api/', apiLimiter);
 
 // API Routes
 app.use('/api', routes);
+
+// 404 Route Handler for unmatched endpoints
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route Not Found',
+    error: `Cannot ${req.method} ${req.originalUrl}`
+  });
+});
 
 // Global Error Handler
 app.use(errorHandler);

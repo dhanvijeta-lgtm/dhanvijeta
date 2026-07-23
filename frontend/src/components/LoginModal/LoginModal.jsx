@@ -18,12 +18,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'You must accept the terms and conditions'
@@ -369,7 +364,7 @@ export function LoginModal({ isOpen, onClose }) {
                     <FaLock className="absolute left-3.5 top-3 text-gray-500 text-sm" />
                     <input
                       type="password"
-                      placeholder="Min 8 chars, 1 upper, 1 special"
+                      placeholder="At least 6 characters"
                       className="w-full bg-white/5 border border-white/10 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition duration-200"
                       {...regRegister('password')}
                     />

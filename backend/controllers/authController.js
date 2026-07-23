@@ -291,18 +291,26 @@ const updateProfile = async (req, res, next) => {
 
 const googleAuth = async (req, res, next) => {
   try {
-    const { idToken, accessToken, credential, token } = req.body;
+    const { idToken, accessToken, credential, token } = req.body || {};
+    const queryToken = req.query?.idToken || req.query?.credential || req.query?.token;
+    const queryAccessToken = req.query?.accessToken || req.query?.access_token;
+    const targetToken = idToken || credential || token || queryToken;
+    const targetAccessToken = accessToken || queryAccessToken;
+
+    if (!targetToken && !targetAccessToken && req.method === 'GET') {
+      const clientId = process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
+      const callbackUrl = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=openid%20profile%20email`;
+      return res.redirect(googleAuthUrl);
+    }
+
     console.log('[Google Auth Debug] Direct authentication request received:', {
-      hasIdToken: !!idToken,
-      hasCredential: !!credential,
-      hasToken: !!token,
-      hasAccessToken: !!accessToken
+      hasIdToken: !!targetToken,
+      hasAccessToken: !!targetAccessToken
     });
     const { user, accessToken: tokenRes, refreshToken } = await authService.googleLoginUser({
-      idToken: idToken || credential || token,
-      accessToken,
-      credential,
-      token
+      idToken: targetToken,
+      accessToken: targetAccessToken
     });
 
     res.cookie('refreshToken', refreshToken, getCookieOptions());

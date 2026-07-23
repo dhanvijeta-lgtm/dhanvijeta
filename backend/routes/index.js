@@ -12,6 +12,27 @@ const blogRoutes = require('./blogRoutes');
 const adminRoutes = require('./adminRoutes');
 const certificateRoutes = require('./certificateRoutes');
 
+// API Health endpoints
+router.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Dhan Vijeta Backend API is Running',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Dhan Vijeta Backend API is Running',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Mount routes
 router.use('/auth', authRoutes);
 router.use('/courses', courseRoutes);
