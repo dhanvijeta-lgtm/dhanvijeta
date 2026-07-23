@@ -6,7 +6,7 @@ const emailService = require('../services/emailService');
 const response = require('../helpers/response');
 
 const getCookieOptions = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.CLIENT_URL && !process.env.CLIENT_URL.includes('localhost'));
   return {
     httpOnly: true,
     secure: isProduction,

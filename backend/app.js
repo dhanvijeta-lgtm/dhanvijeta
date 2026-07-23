@@ -49,7 +49,7 @@ app.use(
         callback(null, true);
       } else {
         console.warn(`[CORS Debug] Blocked request from origin: ${origin}`);
-        callback(new Error(`CORS error: Origin ${origin} not allowed`));
+        callback(null, false);
       }
     },
     credentials: true,
