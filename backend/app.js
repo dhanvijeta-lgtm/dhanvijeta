@@ -90,8 +90,9 @@ const apiLimiter = rateLimit({
 // Apply API Limiter
 app.use('/api/', apiLimiter);
 
-// API Routes
+// API Routes (mount on both /api and root / for resilience)
 app.use('/api', routes);
+app.use('/', routes);
 
 // 404 Route Handler for unmatched endpoints
 app.use('*', (req, res) => {
