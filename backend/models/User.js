@@ -27,6 +27,15 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true
     },
+    profilePicture: {
+      type: String,
+      default: ''
+    },
+    provider: {
+      type: String,
+      enum: ['google', 'email'],
+      default: 'email'
+    },
     role: {
       type: String,
       enum: ['student', 'admin'],

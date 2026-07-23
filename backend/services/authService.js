@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const emailService = require('./emailService');
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -22,16 +24,23 @@ const registerUser = async (userData) => {
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    throw new Error('User already exists');
+    throw new Error('User with this email already exists');
   }
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
 
   const user = await User.create({
     name,
     email,
     password,
     role: role || 'student',
-    isVerified: true
+    provider: 'email',
+    isVerified: false,
+    verificationToken
   });
+
+  // Send verification email
+  await emailService.sendVerificationEmail(user.email, verificationToken);
 
   return user;
 };
@@ -42,15 +51,25 @@ const loginUser = async (email, password) => {
     throw new Error('Invalid email or password');
   }
 
-  const isMatch = await user.comparePassword(password);
-  if (!isMatch) {
-    throw new Error('Invalid email or password');
+  // If user registered with email/password, verify password
+  if (user.password) {
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new Error('Invalid email or password');
+    }
+  } else if (user.provider === 'google') {
+    throw new Error('This account was created using Google. Please click "Continue with Google" to sign in.');
+  }
+
+  if (user.provider === 'email' && !user.isVerified) {
+    const error = new Error('Please verify your email address before logging in. Check your inbox for the verification link.');
+    error.isUnverified = true;
+    throw error;
   }
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  // Store refresh token in user document
   user.refreshToken = refreshToken;
   user.lastActiveDate = new Date();
   await user.save();
@@ -92,25 +111,29 @@ const logoutUser = async (refreshToken) => {
 };
 
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com');
+const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
 
 const googleLoginUser = async ({ idToken, accessToken }) => {
   if (!idToken && !accessToken) {
     throw new Error('Google authentication token is required');
   }
 
-  let googleId, email, name;
+  let googleId, email, name, picture;
+
+  const clientId = getGoogleClientId();
+  const googleClient = new OAuth2Client(clientId);
 
   if (idToken) {
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
+        audience: clientId
       });
       const payload = ticket.getPayload();
       googleId = payload.sub;
       email = payload.email;
       name = payload.name;
+      picture = payload.picture;
     } catch (verErr) {
       console.warn('Google ID token verification failed, checking access token fallback:', verErr.message);
     }
@@ -124,6 +147,7 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
         googleId = data.sub;
         email = data.email;
         name = data.name;
+        picture = data.picture;
       }
     } catch (fetchErr) {
       console.warn('Google userinfo fetch failed:', fetchErr.message);
@@ -142,12 +166,15 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
 
   if (user) {
     if (!user.googleId) user.googleId = googleId;
+    if (picture && !user.profilePicture) user.profilePicture = picture;
     if (!user.isVerified) user.isVerified = true;
   } else {
     user = await User.create({
       name: name || email.split('@')[0],
       email,
       googleId,
+      profilePicture: picture || '',
+      provider: 'google',
       isVerified: true
     });
   }
@@ -163,9 +190,9 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
 };
 
 const googleCallbackCodeExchange = async (code, customRedirectUri) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
+  const clientId = getGoogleClientId();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const callbackUrl = customRedirectUri || process.env.GOOGLE_CALLBACK_URL;
+  const callbackUrl = customRedirectUri || process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
 
   console.log('[Google Auth Debug] Initiating code exchange. Callback URL:', callbackUrl);
 
@@ -175,6 +202,24 @@ const googleCallbackCodeExchange = async (code, customRedirectUri) => {
   return await googleLoginUser({ idToken: tokens.id_token, accessToken: tokens.access_token });
 };
 
+const resendVerificationToken = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    // Return success silently for privacy
+    return;
+  }
+
+  if (user.isVerified) {
+    throw new Error('This account is already verified.');
+  }
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  user.verificationToken = verificationToken;
+  await user.save();
+
+  await emailService.sendVerificationEmail(user.email, verificationToken);
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -182,6 +227,7 @@ module.exports = {
   googleCallbackCodeExchange,
   refreshAccessToken,
   logoutUser,
+  resendVerificationToken,
   generateAccessToken,
   generateRefreshToken
 };

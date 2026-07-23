@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   // Restore session and fetch user wishlist on mount
   useEffect(() => {
     const initializeAuth = async () => {
-      // Handle OAuth redirect token or error params in URL
       const urlParams = new URLSearchParams(window.location.search);
       const urlToken = urlParams.get('token');
       const urlError = urlParams.get('error');
@@ -48,7 +47,6 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    // Listen to silent refresh failures
     const handleLogoutEvent = () => {
       setUser(null);
       setWishlist([]);
@@ -66,32 +64,67 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('accessToken', accessToken);
       setUser(userData);
       
-      // Fetch wishlist
-      const wishlistRes = await client.get('/wishlists');
-      setWishlist(wishlistRes.data.data.map(c => c._id) || []);
+      try {
+        const wishlistRes = await client.get('/wishlists');
+        setWishlist(wishlistRes.data.data.map(c => c._id) || []);
+      } catch (wErr) {
+        console.warn('Could not fetch wishlist:', wErr);
+      }
 
-      toast.success('Welcome back!');
-      return true;
+      toast.success(`Welcome back, ${userData.name || 'Trader'}!`);
+      return { success: true, user: userData };
     } catch (err) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Login failed');
-      return false;
+      const message = err.response?.data?.message || err.response?.data?.error || 'Login failed';
+      toast.error(message);
+      return { success: false, error: message, status: err.response?.status };
     }
   };
 
   const register = async (name, email, password) => {
     try {
       const res = await client.post('/auth/register', { name, email, password });
-      const { accessToken, user: userData } = res.data.data;
-      
-      if (accessToken) {
-        localStorage.setItem('accessToken', accessToken);
-        setUser(userData);
-      }
-      toast.success(`Welcome, ${userData?.name || 'User'}!`);
-      return true;
+      toast.success(res.data.message || 'Registration successful! Please check your email to verify account.');
+      return { success: true, message: res.data.message };
     } catch (err) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Registration failed');
-      return false;
+      const message = err.response?.data?.message || err.response?.data?.error || 'Registration failed';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const resendVerification = async (email) => {
+    try {
+      const res = await client.post('/auth/resend-verification', { email });
+      toast.success(res.data.message || 'Verification link sent to your email');
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to send verification link';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      const res = await client.post('/auth/forgot-password', { email });
+      toast.success(res.data.message || 'If registered, a password reset link has been sent');
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Password reset request failed';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const resetPassword = async (token, password) => {
+    try {
+      const res = await client.post('/auth/reset-password', { token, password });
+      toast.success(res.data.message || 'Password reset successful! Please log in.');
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to reset password';
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
@@ -107,15 +140,16 @@ export const AuthProvider = ({ children }) => {
     toast.success('Logged out successfully');
   };
 
-  const updateProfile = async (name, password) => {
+  const updateProfile = async (name, password, profilePicture) => {
     try {
-      const res = await client.put('/auth/profile', { name, password });
+      const res = await client.put('/auth/profile', { name, password, profilePicture });
       setUser(res.data.data.user);
       toast.success('Profile updated successfully');
-      return true;
+      return { success: true };
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Profile update failed');
-      return false;
+      const message = err.response?.data?.message || 'Profile update failed';
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
@@ -158,10 +192,11 @@ export const AuthProvider = ({ children }) => {
       }
 
       toast.success(`Welcome, ${userData.name}!`);
-      return true;
+      return { success: true, user: userData };
     } catch (err) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Google authentication failed');
-      return false;
+      const message = err.response?.data?.message || err.response?.data?.error || 'Google authentication failed';
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
@@ -177,6 +212,9 @@ export const AuthProvider = ({ children }) => {
         register,
         googleLogin,
         logout,
+        resendVerification,
+        forgotPassword,
+        resetPassword,
         updateProfile,
         toggleWishlist
       }}

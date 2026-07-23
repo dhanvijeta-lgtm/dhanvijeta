@@ -5,34 +5,6 @@ const authService = require('../services/authService');
 const emailService = require('../services/emailService');
 const response = require('../helpers/response');
 
-const register = async (req, res, next) => {
-  try {
-    const user = await authService.registerUser(req.body);
-    const { accessToken, refreshToken } = await authService.loginUser(req.body.email, req.body.password);
-    
-    res.cookie('refreshToken', refreshToken, getCookieOptions());
-
-    return response.success(
-      res,
-      {
-        accessToken,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          streakCount: user.streakCount,
-          isVerified: user.isVerified
-        }
-      },
-      'Registration successful!',
-      201
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
 const getCookieOptions = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   return {
@@ -41,6 +13,30 @@ const getCookieOptions = () => {
     sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   };
+};
+
+const register = async (req, res, next) => {
+  try {
+    const user = await authService.registerUser(req.body);
+    
+    return response.success(
+      res,
+      {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          provider: user.provider,
+          isVerified: user.isVerified
+        }
+      },
+      'Registration successful! Please check your email to verify your account.',
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
 };
 
 const login = async (req, res, next) => {
@@ -60,6 +56,8 @@ const login = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          provider: user.provider,
+          profilePicture: user.profilePicture,
           streakCount: user.streakCount,
           isVerified: user.isVerified
         }
@@ -67,13 +65,15 @@ const login = async (req, res, next) => {
       'Login successful'
     );
   } catch (error) {
+    if (error.isUnverified) {
+      return response.error(res, error.message, 403);
+    }
     next(error);
   }
 };
 
 const refreshToken = async (req, res, next) => {
   try {
-    // Attempt to pull refresh token from cookies, headers, or body
     const token = req.cookies?.refreshToken || req.body.refreshToken;
     if (!token) {
       return response.error(res, 'Refresh token not found', 401);
@@ -81,7 +81,6 @@ const refreshToken = async (req, res, next) => {
 
     const { accessToken, refreshToken: newRefreshToken, user } = await authService.refreshAccessToken(token);
 
-    // Reset cookie
     res.cookie('refreshToken', newRefreshToken, getCookieOptions());
 
     return response.success(res, {
@@ -91,7 +90,10 @@ const refreshToken = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        streakCount: user.streakCount
+        provider: user.provider,
+        profilePicture: user.profilePicture,
+        streakCount: user.streakCount,
+        isVerified: user.isVerified
       }
     }, 'Token refreshed successfully');
   } catch (error) {
@@ -129,7 +131,24 @@ const verifyEmail = async (req, res, next) => {
     user.verificationToken = undefined;
     await user.save();
 
-    return response.success(res, null, 'Email successfully verified');
+    return response.success(res, {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified
+      }
+    }, 'Email successfully verified! You can now log in.');
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.resendVerificationToken(email);
+    return response.success(res, null, 'Verification email sent. Please check your inbox.');
   } catch (error) {
     next(error);
   }
@@ -140,7 +159,6 @@ const forgotPassword = async (req, res, next) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      // Avoid revealing that user doesn't exist for security, but log it locally
       return response.success(res, null, 'If this email is registered, a password reset link has been sent.');
     }
 
@@ -159,15 +177,15 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
-    const { token } = req.query;
-    const { password } = req.body;
+    const { token, password } = req.body;
+    const queryToken = req.query.token || token;
 
-    if (!token) {
+    if (!queryToken) {
       return response.error(res, 'Reset token is required', 400);
     }
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: queryToken,
       resetPasswordExpires: { $gt: Date.now() }
     });
 
@@ -175,12 +193,12 @@ const resetPassword = async (req, res, next) => {
       return response.error(res, 'Invalid or expired reset token', 400);
     }
 
-    user.password = password; // Pre-save hooks will handle hash
+    user.password = password; // Pre-save hook hashes password
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    return response.success(res, null, 'Password reset successful');
+    return response.success(res, null, 'Password reset successful! You can now log in with your new password.');
   } catch (error) {
     next(error);
   }
@@ -195,25 +213,22 @@ const getProfile = async (req, res, next) => {
 
     // Calculate streak logic
     const today = new Date();
-    const lastActive = new Date(user.lastActiveDate);
+    const lastActive = new Date(user.lastActiveDate || today);
     const diffTime = Math.abs(today - lastActive);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays <= 1) {
-      // Active within last day, maintain or update streak
       if (diffDays === 1 && today.getDate() !== lastActive.getDate()) {
         user.streakCount += 1;
         user.lastActiveDate = today;
         await user.save();
       }
     } else {
-      // Streak broken, reset
       user.streakCount = 1;
       user.lastActiveDate = today;
       await user.save();
     }
 
-    // Fetch purchased details
     const purchases = await Purchase.find({ userId: user._id, paymentStatus: 'completed' })
       .populate('courseId', 'title thumbnail duration');
 
@@ -223,9 +238,12 @@ const getProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        provider: user.provider,
+        profilePicture: user.profilePicture,
         isVerified: user.isVerified,
         streakCount: user.streakCount,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       },
       purchasedCoursesCount: purchases.length,
       purchasedCourses: purchases
@@ -237,11 +255,16 @@ const getProfile = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, password } = req.body;
+    const { name, password, profilePicture } = req.body;
     const user = await User.findById(req.user.id);
 
+    if (!user) {
+      return response.error(res, 'User not found', 404);
+    }
+
     if (name) user.name = name;
-    if (password) user.password = password; // Hashed in pre-save hook
+    if (password) user.password = password;
+    if (profilePicture) user.profilePicture = profilePicture;
 
     await user.save();
 
@@ -250,7 +273,10 @@ const updateProfile = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        provider: user.provider,
+        profilePicture: user.profilePicture,
+        isVerified: user.isVerified
       }
     }, 'Profile updated successfully');
   } catch (error) {
@@ -277,8 +303,12 @@ const googleAuth = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          provider: user.provider,
+          profilePicture: user.profilePicture,
           streakCount: user.streakCount,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
         }
       },
       'Google authentication successful'
@@ -305,7 +335,7 @@ const googleCallback = async (req, res, next) => {
     }
 
     console.log('[Google Auth Debug] OAuth Callback code exchange started');
-    const { user, accessToken: token, refreshToken } = await authService.googleCallbackCodeExchange(code);
+    const { accessToken: token, refreshToken } = await authService.googleCallbackCodeExchange(code);
 
     res.cookie('refreshToken', refreshToken, getCookieOptions());
 
@@ -326,6 +356,7 @@ module.exports = {
   refreshToken,
   logout,
   verifyEmail,
+  resendVerification,
   forgotPassword,
   resetPassword,
   getProfile,

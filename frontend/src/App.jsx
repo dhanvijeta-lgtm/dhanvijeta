@@ -25,6 +25,8 @@ import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import CourseDashboard from './pages/MyBatch/CourseDashboard';
 import LessonViewer from './pages/MyBatch/LessonViewer';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -37,7 +39,6 @@ function LayoutWrapper() {
   useEffect(() => {
     if (location.state?.openLogin) {
       setIsLoginOpen(true);
-      // Clear state so modal doesn't re-open on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -59,6 +60,10 @@ function LayoutWrapper() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogDetails />} />
+
+          {/* Auth Flow Pages */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Student Dashboards */}
           <Route 
@@ -109,7 +114,7 @@ function LayoutWrapper() {
 }
 
 export function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '48923631189-ae386sergrd5vftp2uc15hn4q9jbh225.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>

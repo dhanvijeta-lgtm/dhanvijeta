@@ -7,7 +7,8 @@ const {
   registerSchema,
   loginSchema,
   forgotPasswordSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
+  resendVerificationSchema
 } = require('../validators/authValidator');
 
 router.post('/register', validate(registerSchema), authController.register);
@@ -17,6 +18,7 @@ router.get('/google/callback', authController.googleCallback);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/logout', authController.logout);
 router.get('/verify-email', authController.verifyEmail);
+router.post('/resend-verification', validate(resendVerificationSchema), authController.resendVerification);
 router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
 
