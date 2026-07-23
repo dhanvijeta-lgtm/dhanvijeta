@@ -286,9 +286,19 @@ const updateProfile = async (req, res, next) => {
 
 const googleAuth = async (req, res, next) => {
   try {
-    const { idToken, accessToken } = req.body;
-    console.log('[Google Auth Debug] Direct authentication request received');
-    const { user, accessToken: token, refreshToken } = await authService.googleLoginUser({ idToken, accessToken });
+    const { idToken, accessToken, credential, token } = req.body;
+    console.log('[Google Auth Debug] Direct authentication request received:', {
+      hasIdToken: !!idToken,
+      hasCredential: !!credential,
+      hasToken: !!token,
+      hasAccessToken: !!accessToken
+    });
+    const { user, accessToken: tokenRes, refreshToken } = await authService.googleLoginUser({
+      idToken: idToken || credential || token,
+      accessToken,
+      credential,
+      token
+    });
 
     res.cookie('refreshToken', refreshToken, getCookieOptions());
 
@@ -297,7 +307,7 @@ const googleAuth = async (req, res, next) => {
     return response.success(
       res,
       {
-        accessToken: token,
+        accessToken: tokenRes,
         user: {
           id: user._id,
           name: user.name,

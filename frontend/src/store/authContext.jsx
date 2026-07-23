@@ -177,7 +177,7 @@ export const AuthProvider = ({ children }) => {
 
   const googleLogin = async (tokenData) => {
     try {
-      const payload = typeof tokenData === 'string' ? { idToken: tokenData } : tokenData;
+      const payload = typeof tokenData === 'string' ? { idToken: tokenData, credential: tokenData } : tokenData;
       const res = await client.post('/auth/google', payload);
       const { accessToken, user: userData } = res.data.data;
       

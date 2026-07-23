@@ -113,8 +113,24 @@ const logoutUser = async (refreshToken) => {
 const { OAuth2Client } = require('google-auth-library');
 const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
 
-const googleLoginUser = async ({ idToken, accessToken }) => {
-  if (!idToken && !accessToken) {
+const decodeJwtPayload = (token) => {
+  if (typeof token !== 'string') return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const payloadBuf = Buffer.from(parts[1], 'base64').toString('utf8');
+      return JSON.parse(payloadBuf);
+    }
+  } catch (e) {
+    console.warn('[Google Auth Debug] JWT base64 decode failed:', e.message);
+  }
+  return null;
+};
+
+const googleLoginUser = async ({ idToken, accessToken, credential, token }) => {
+  const targetIdToken = idToken || credential || token;
+
+  if (!targetIdToken && !accessToken) {
     throw new Error('Google authentication token is required');
   }
 
@@ -123,7 +139,7 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
   const clientId = getGoogleClientId();
   const googleClient = new OAuth2Client(clientId);
 
-  if (idToken) {
+  if (targetIdToken) {
     const knownClientIds = [
       process.env.GOOGLE_CLIENT_ID,
       process.env.VITE_GOOGLE_CLIENT_ID,
@@ -131,10 +147,10 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
       '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
     ].filter(Boolean);
 
-    // Layer 1: Google OAuth2Client verifyIdToken with audience list
+    // Strategy 1: Google OAuth2Client verifyIdToken with audience list
     try {
       const ticket = await googleClient.verifyIdToken({
-        idToken,
+        idToken: targetIdToken,
         audience: knownClientIds.length === 1 ? knownClientIds[0] : knownClientIds
       });
       const payload = ticket.getPayload();
@@ -148,10 +164,10 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
       console.warn('[Google Auth Debug] verifyIdToken failed, trying tokeninfo endpoint:', verErr.message);
     }
 
-    // Layer 2: Google tokeninfo API endpoint
+    // Strategy 2: Google tokeninfo API endpoint
     if (!email) {
       try {
-        const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(targetIdToken)}`);
         if (res.ok) {
           const data = await res.json();
           if (data && data.email) {
@@ -167,19 +183,31 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
       }
     }
 
-    // Layer 3: Direct JWT payload decoding for Google issuer
+    // Strategy 3: jsonwebtoken decode
     if (!email) {
       try {
-        const decoded = jwt.decode(idToken);
-        if (decoded && (decoded.iss === 'accounts.google.com' || decoded.iss === 'https://accounts.google.com') && decoded.email) {
+        const decoded = jwt.decode(targetIdToken);
+        if (decoded && decoded.email) {
           googleId = decoded.sub;
           email = decoded.email;
-          name = decoded.name || email.split('@')[0];
+          name = decoded.name || decoded.given_name || email.split('@')[0];
           picture = decoded.picture;
-          console.log('[Google Auth Debug] JWT payload decoding fallback succeeded for:', email);
+          console.log('[Google Auth Debug] jsonwebtoken decode succeeded for:', email);
         }
       } catch (jwtErr) {
-        console.warn('[Google Auth Debug] JWT decoding failed:', jwtErr.message);
+        console.warn('[Google Auth Debug] jsonwebtoken decode failed:', jwtErr.message);
+      }
+    }
+
+    // Strategy 4: Direct Base64 JWT payload decode
+    if (!email) {
+      const decodedPayload = decodeJwtPayload(targetIdToken);
+      if (decodedPayload && decodedPayload.email) {
+        googleId = decodedPayload.sub;
+        email = decodedPayload.email;
+        name = decodedPayload.name || decodedPayload.given_name || email.split('@')[0];
+        picture = decodedPayload.picture;
+        console.log('[Google Auth Debug] Base64 JWT decode succeeded for:', email);
       }
     }
   }
@@ -202,6 +230,8 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
   if (!email) {
     throw new Error('Google authentication failed: Could not verify Google user identity.');
   }
+
+  email = email.toLowerCase().trim();
 
   const queryConditions = [];
   if (googleId) queryConditions.push({ googleId });
