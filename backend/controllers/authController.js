@@ -17,21 +17,26 @@ const getCookieOptions = () => {
 
 const register = async (req, res, next) => {
   try {
-    const user = await authService.registerUser(req.body);
+    const { user, accessToken, refreshToken } = await authService.registerUser(req.body);
     
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
+
     return response.success(
       res,
       {
+        accessToken,
         user: {
           id: user._id,
           name: user.name,
           email: user.email,
           role: user.role,
           provider: user.provider,
+          profilePicture: user.profilePicture,
+          streakCount: user.streakCount,
           isVerified: user.isVerified
         }
       },
-      'Registration successful! Please check your email to verify your account.',
+      'Registration successful!',
       201
     );
   } catch (error) {

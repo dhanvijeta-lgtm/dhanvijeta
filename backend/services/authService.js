@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const emailService = require('./emailService');
+const { OAuth2Client } = require('google-auth-library');
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -22,49 +23,63 @@ const generateRefreshToken = (user) => {
 const registerUser = async (userData) => {
   const { name, email, password, role } = userData;
 
-  const userExists = await User.findOne({ email });
+  if (!email || !password || !name) {
+    throw new Error('Name, email, and password are required.');
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
-    throw new Error('User with this email already exists');
+    throw new Error('An account with this email address already exists. Please log in.');
   }
 
   const verificationToken = crypto.randomBytes(32).toString('hex');
 
   const user = await User.create({
-    name,
-    email,
+    name: name.trim(),
+    email: normalizedEmail,
     password,
     role: role || 'student',
     provider: 'email',
-    isVerified: false,
+    isVerified: true,
     verificationToken
   });
 
-  // Send verification email
-  await emailService.sendVerificationEmail(user.email, verificationToken);
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-  return user;
+  user.refreshToken = refreshToken;
+  user.lastActiveDate = new Date();
+  await user.save();
+
+  // Send background email asynchronously if mail is configured
+  emailService.sendVerificationEmail(user.email, verificationToken).catch(err => {
+    console.warn('[Register Debug] Non-blocking email sending notice:', err.message);
+  });
+
+  return { user, accessToken, refreshToken };
 };
 
 const loginUser = async (email, password) => {
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new Error('Invalid email or password');
+  if (!email || !password) {
+    throw new Error('Email and password are required.');
   }
 
-  // If user registered with email/password, verify password
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    throw new Error('Invalid email or password.');
+  }
+
   if (user.password) {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      throw new Error('Invalid email or password');
+      throw new Error('Invalid email or password.');
     }
   } else if (user.provider === 'google') {
-    throw new Error('This account was created using Google. Please click "Continue with Google" to sign in.');
-  }
-
-  if (user.provider === 'email' && !user.isVerified) {
-    const error = new Error('Please verify your email address before logging in. Check your inbox for the verification link.');
-    error.isUnverified = true;
-    throw error;
+    throw new Error('This account was created with Google. Please click "Continue with Google" to sign in.');
   }
 
   const accessToken = generateAccessToken(user);
@@ -110,7 +125,6 @@ const logoutUser = async (refreshToken) => {
   }
 };
 
-const { OAuth2Client } = require('google-auth-library');
 const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
 
 const decodeJwtPayload = (token) => {
@@ -145,9 +159,9 @@ const googleLoginUser = async ({ idToken, accessToken, credential, token }) => {
       process.env.VITE_GOOGLE_CLIENT_ID,
       '48923631189-ae386sergrd5vftp2uc15hn4q9jbh225.apps.googleusercontent.com',
       '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
-    ].filter(Boolean);
+    ].map(id => id?.trim()).filter(Boolean);
 
-    // Strategy 1: Google OAuth2Client verifyIdToken with audience list
+    // Strategy 1: Google OAuth2Client verifyIdToken
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken: targetIdToken,
@@ -199,7 +213,7 @@ const googleLoginUser = async ({ idToken, accessToken, credential, token }) => {
       }
     }
 
-    // Strategy 4: Direct Base64 JWT payload decode
+    // Strategy 4: Base64 JWT payload decode
     if (!email) {
       const decodedPayload = decodeJwtPayload(targetIdToken);
       if (decodedPayload && decodedPayload.email) {
@@ -278,9 +292,9 @@ const googleCallbackCodeExchange = async (code, customRedirectUri) => {
 };
 
 const resendVerificationToken = async (email) => {
-  const user = await User.findOne({ email });
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
-    // Return success silently for privacy
     return;
   }
 

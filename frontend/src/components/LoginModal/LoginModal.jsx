@@ -110,8 +110,8 @@ export function LoginModal({ isOpen, onClose }) {
     
     if (res?.success) {
       resetRegister();
-      setActiveTab('login');
-      setUnverifiedEmail(data.email);
+      onClose();
+      navigate('/dashboard');
     }
   };
 
