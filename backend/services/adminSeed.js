@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const seedAdmin = async () => {
-  const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/dhanvijeta';
-  const email = process.env.DEFAULT_ADMIN_EMAIL || 'admin@dhanvijeta.com';
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/dhanvijeta';
+  const email = (process.env.DEFAULT_ADMIN_EMAIL || 'admin@dhanvijeta.com').toLowerCase().trim();
   const password = process.env.DEFAULT_ADMIN_PASSWORD || 'AdminPass123!';
 
   try {
@@ -13,7 +13,10 @@ const seedAdmin = async () => {
 
     const adminExists = await User.findOne({ email });
     if (adminExists) {
-      console.log(`Admin user with email ${email} already exists.`);
+      adminExists.role = 'admin';
+      adminExists.isVerified = true;
+      await adminExists.save();
+      console.log(`Admin user with email ${email} already exists. Verified and updated role to 'admin'.`);
       process.exit(0);
     }
 
@@ -22,6 +25,7 @@ const seedAdmin = async () => {
       email,
       password,
       role: 'admin',
+      provider: 'email',
       isVerified: true
     });
 
