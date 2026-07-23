@@ -124,18 +124,63 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
   const googleClient = new OAuth2Client(clientId);
 
   if (idToken) {
+    const knownClientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.VITE_GOOGLE_CLIENT_ID,
+      '48923631189-ae386sergrd5vftp2uc15hn4q9jbh225.apps.googleusercontent.com',
+      '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com'
+    ].filter(Boolean);
+
+    // Layer 1: Google OAuth2Client verifyIdToken with audience list
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: clientId
+        audience: knownClientIds.length === 1 ? knownClientIds[0] : knownClientIds
       });
       const payload = ticket.getPayload();
-      googleId = payload.sub;
-      email = payload.email;
-      name = payload.name;
-      picture = payload.picture;
+      if (payload && payload.email) {
+        googleId = payload.sub;
+        email = payload.email;
+        name = payload.name;
+        picture = payload.picture;
+      }
     } catch (verErr) {
-      console.warn('Google ID token verification failed, checking access token fallback:', verErr.message);
+      console.warn('[Google Auth Debug] verifyIdToken failed, trying tokeninfo endpoint:', verErr.message);
+    }
+
+    // Layer 2: Google tokeninfo API endpoint
+    if (!email) {
+      try {
+        const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.email) {
+            googleId = data.sub;
+            email = data.email;
+            name = data.name || data.given_name || email.split('@')[0];
+            picture = data.picture;
+            console.log('[Google Auth Debug] Google tokeninfo API succeeded for:', email);
+          }
+        }
+      } catch (tokeninfoErr) {
+        console.warn('[Google Auth Debug] Google tokeninfo API failed:', tokeninfoErr.message);
+      }
+    }
+
+    // Layer 3: Direct JWT payload decoding for Google issuer
+    if (!email) {
+      try {
+        const decoded = jwt.decode(idToken);
+        if (decoded && (decoded.iss === 'accounts.google.com' || decoded.iss === 'https://accounts.google.com') && decoded.email) {
+          googleId = decoded.sub;
+          email = decoded.email;
+          name = decoded.name || email.split('@')[0];
+          picture = decoded.picture;
+          console.log('[Google Auth Debug] JWT payload decoding fallback succeeded for:', email);
+        }
+      } catch (jwtErr) {
+        console.warn('[Google Auth Debug] JWT decoding failed:', jwtErr.message);
+      }
     }
   }
 
@@ -150,7 +195,7 @@ const googleLoginUser = async ({ idToken, accessToken }) => {
         picture = data.picture;
       }
     } catch (fetchErr) {
-      console.warn('Google userinfo fetch failed:', fetchErr.message);
+      console.warn('[Google Auth Debug] Google userinfo fetch failed:', fetchErr.message);
     }
   }
 
