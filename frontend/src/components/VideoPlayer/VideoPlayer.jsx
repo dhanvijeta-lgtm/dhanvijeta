@@ -1,6 +1,25 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { FaPlay, FaPause, FaVolumeMute, FaVolumeUp, FaExpand, FaCog } from 'react-icons/fa';
 
+const getEmbedUrl = (url) => {
+  if (!url) return null;
+  const strUrl = String(url).trim();
+
+  // YouTube match
+  const ytMatch = strUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
+  }
+
+  // Vimeo match
+  const vimeoMatch = strUrl.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+
+  return null;
+};
+
 export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -11,14 +30,29 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
 
+  const embedUrl = getEmbedUrl(src);
+
   useEffect(() => {
-    // Reset state when source changes
     setIsPlaying(false);
     setCurrentTime(0);
-    if (videoRef.current) {
+    if (videoRef.current && !embedUrl) {
       videoRef.current.load();
     }
-  }, [src]);
+  }, [src, embedUrl]);
+
+  if (embedUrl) {
+    return (
+      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-emerald-glow border border-white/10">
+        <iframe
+          src={embedUrl}
+          title="Lesson Video Player"
+          className="w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -92,7 +126,6 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
 
   return (
     <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden group shadow-emerald-glow border border-white/10">
-      {/* HTML5 Video element */}
       <video
         ref={videoRef}
         src={src}
@@ -104,9 +137,7 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
         playsInline
       />
 
-      {/* Controller overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-finance-dark via-finance-dark/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
-        {/* Timeline Slider */}
         <input
           type="range"
           min="0"
@@ -116,19 +147,16 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
           className="w-full accent-finance-gold cursor-pointer bg-white/20 h-1.5 rounded-lg outline-none"
         />
 
-        {/* Buttons Control Row */}
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <button onClick={togglePlay} className="hover:text-finance-gold transition p-1">
               {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} />}
             </button>
 
-            {/* Time Indicators */}
             <span className="text-xs font-mono">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
 
-            {/* Volume Controllers */}
             <div className="flex items-center gap-2">
               <button onClick={toggleMute} className="hover:text-finance-gold transition p-1">
                 {isMuted ? <FaVolumeMute size={18} /> : <FaVolumeUp size={18} />}
@@ -146,7 +174,6 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
           </div>
 
           <div className="flex items-center gap-4 relative">
-            {/* Speed Settings button */}
             <button onClick={() => setShowSpeedMenu(!showSpeedMenu)} className="hover:text-finance-gold transition p-1">
               <FaCog size={18} />
             </button>
@@ -165,7 +192,6 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
               </div>
             )}
 
-            {/* Fullscreen Button */}
             <button onClick={toggleFullscreen} className="hover:text-finance-gold transition p-1">
               <FaExpand size={18} />
             </button>

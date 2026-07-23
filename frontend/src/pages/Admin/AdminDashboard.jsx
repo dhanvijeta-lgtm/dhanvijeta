@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
-import { FaWallet, FaUsers, FaBook, FaTags, FaBullhorn, FaPlus, FaTrash, FaCheck } from 'react-icons/fa';
+import { FaWallet, FaUsers, FaBook, FaTags, FaBullhorn, FaPlus, FaTrash, FaCheck, FaVideo, FaEye, FaEyeSlash, FaFilePdf, FaTasks } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 export function AdminDashboard() {
@@ -31,7 +31,10 @@ export function AdminDashboard() {
   const [selectedSectionForLesson, setSelectedSectionForLesson] = useState('');
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [newLessonDesc, setNewLessonDesc] = useState('');
+  const [newLessonVideoUrl, setNewLessonVideoUrl] = useState('');
   const [newLessonVideo, setNewLessonVideo] = useState('');
+  const [newLessonPdfUrl, setNewLessonPdfUrl] = useState('');
+  const [newLessonAssignment, setNewLessonAssignment] = useState('');
   const [newLessonDuration, setNewLessonDuration] = useState('600');
 
   // Fetch admin dashboard analytics
@@ -77,10 +80,22 @@ export function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
-      toast.success('Course created successfully');
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success('Course created and published successfully!');
       setNewCourseTitle('');
       setNewCoursePrice('');
       setNewCourseDesc('');
+    }
+  });
+
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ id, isPublished }) => {
+      await client.put(`/courses/${id}`, { isPublished });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success('Course visibility status updated!');
     }
   });
 
@@ -114,6 +129,7 @@ export function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success('Course deleted');
     }
   });
@@ -145,10 +161,13 @@ export function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
-      toast.success('Lesson attached successfully!');
+      toast.success('Lesson with video attached successfully!');
       setNewLessonTitle('');
       setNewLessonDesc('');
+      setNewLessonVideoUrl('');
       setNewLessonVideo('');
+      setNewLessonPdfUrl('');
+      setNewLessonAssignment('');
     }
   });
 
@@ -160,7 +179,8 @@ export function AdminDashboard() {
       price: Number(newCoursePrice),
       category: newCourseCategory,
       description: newCourseDesc,
-      instructor: 'Dhan Vijeta'
+      instructor: 'Dhan Vijeta Team',
+      isPublished: true
     });
   };
 
@@ -205,10 +225,11 @@ export function AdminDashboard() {
       payload: {
         title: newLessonTitle,
         description: newLessonDesc,
+        videoUrl: newLessonVideoUrl || newLessonVideo,
         videoPublicId: newLessonVideo,
         videoDuration: Number(newLessonDuration),
-        pdfUrl: '',
-        assignment: ''
+        pdfUrl: newLessonPdfUrl,
+        assignment: newLessonAssignment
       }
     });
   };
@@ -218,285 +239,333 @@ export function AdminDashboard() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
       
-      {/* SIDEBAR TABS PANEL */}
-      <div className="lg:col-span-1 glass-card rounded-2xl p-6 border border-white/5 space-y-4 self-start">
-        <h2 className="text-lg font-bold text-finance-gold tracking-wider uppercase mb-2">Admin Console</h2>
-        <div className="flex flex-col gap-2 text-xs font-bold select-none">
-          {[
-            { id: 'overview', label: 'Overview Metrics', icon: <FaWallet /> },
-            { id: 'courses', label: 'Manage Syllabus', icon: <FaBook /> },
-            { id: 'coupons', label: 'Manage Coupons', icon: <FaTags /> },
-            { id: 'announcements', label: 'Broadcaster Board', icon: <FaBullhorn /> },
-            { id: 'students', label: 'Students List', icon: <FaUsers /> }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActivePanel(tab.id)}
-              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl transition ${
-                activePanel === tab.id
-                  ? 'bg-finance-gold text-finance-dark shadow-gold-glow'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
+      {/* SIDEBAR NAVIGATION */}
+      <div className="lg:col-span-1 space-y-2">
+        <div className="glass-card rounded-2xl p-4 border border-white/5 space-y-1">
+          <button
+            onClick={() => setActivePanel('overview')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs transition ${activePanel === 'overview' ? 'bg-finance-gold text-finance-dark font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FaWallet /> Business Intelligence
+          </button>
+          <button
+            onClick={() => setActivePanel('courses')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs transition ${activePanel === 'courses' ? 'bg-finance-gold text-finance-dark font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FaBook /> Courses & Syllabus Builder
+          </button>
+          <button
+            onClick={() => setActivePanel('coupons')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs transition ${activePanel === 'coupons' ? 'bg-finance-gold text-finance-dark font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FaTags /> Coupon Management
+          </button>
+          <button
+            onClick={() => setActivePanel('announcements')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs transition ${activePanel === 'announcements' ? 'bg-finance-gold text-finance-dark font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FaBullhorn /> Broadcaster & Alerts
+          </button>
+          <button
+            onClick={() => setActivePanel('students')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs transition ${activePanel === 'students' ? 'bg-finance-gold text-finance-dark font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FaUsers /> Student Directory
+          </button>
         </div>
       </div>
 
-      {/* RIGHT MAIN CONSOLE DISPLAY */}
-      <div className="lg:col-span-3 space-y-8">
-        
+      {/* MAIN ADMIN WORKSPACE */}
+      <div className="lg:col-span-3 space-y-6">
+
         {/* OVERVIEW PANEL */}
         {activePanel === 'overview' && (
-          <div className="space-y-8">
-            {loadingAnalytics ? (
-              <div className="h-40 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-t-finance-gold border-finance-navy rounded-full animate-spin"></div>
+          <div className="space-y-6">
+            
+            {/* KPI STAT CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="glass-card rounded-2xl p-5 border border-white/5 space-y-2">
+                <span className="text-gray-400 text-xs font-semibold uppercase">Total Revenue</span>
+                <h3 className="text-2xl font-black text-amber-400 font-mono">
+                  ₹{analytics?.totalRevenue ? analytics.totalRevenue.toLocaleString('en-IN') : '0'}
+                </h3>
               </div>
-            ) : !analytics ? (
-              <p className="text-gray-500 text-xs">Error generating analytics.</p>
-            ) : (
-              <div className="space-y-8">
-                {/* Metrics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div className="glass-card rounded-2xl p-6 border border-white/5 text-center">
-                    <span className="block text-2xl font-black text-white">₹{analytics.metrics.totalRevenue.toLocaleString('en-IN')}</span>
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mt-1">Total Revenue</span>
-                  </div>
-                  <div className="glass-card rounded-2xl p-6 border border-white/5 text-center">
-                    <span className="block text-2xl font-black text-finance-emerald">₹{analytics.metrics.monthlyRevenue.toLocaleString('en-IN')}</span>
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mt-1">Monthly Revenue</span>
-                  </div>
-                  <div className="glass-card rounded-2xl p-6 border border-white/5 text-center">
-                    <span className="block text-2xl font-black text-finance-gold">{analytics.metrics.totalStudents}</span>
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mt-1">Active Students</span>
-                  </div>
-                </div>
-
-                {/* SVG Custom Sales Trend Chart */}
-                <div className="glass-card rounded-3xl p-6 border border-white/5 space-y-4">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Revenue Trend Curve</h3>
-                  
-                  {/* Decorative chart vector */}
-                  <div className="w-full h-40 bg-finance-navy/40 rounded-xl relative overflow-hidden flex items-end">
-                    <svg viewBox="0 0 100 30" className="w-full h-32 text-finance-gold" preserveAspectRatio="none">
-                      <defs>
-                        <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#ffd700" stopOpacity="0.2" />
-                          <stop offset="100%" stopColor="#ffd700" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 25 Q 15 10 30 18 T 60 5 T 90 12 T 100 8 L 100 30 L 0 30 Z" fill="url(#grad)" />
-                      <path d="M 0 25 Q 15 10 30 18 T 60 5 T 90 12 T 100 8" fill="none" stroke="#ffd700" strokeWidth="0.8" />
-                    </svg>
-                    <span className="absolute bottom-2 left-4 text-[9px] text-gray-500 uppercase font-mono">Simulated Sales Momentum</span>
-                  </div>
-                </div>
-
-                {/* Recent Purchases List */}
-                <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Recent Transactions</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-white/5 text-gray-500 pb-2">
-                          <th className="pb-2">User</th>
-                          <th className="pb-2">Course</th>
-                          <th className="pb-2">Price</th>
-                          <th className="pb-2 text-right">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {analytics.recentPayments?.map((pay) => (
-                          <tr key={pay._id} className="text-gray-300">
-                            <td className="py-2.5">{pay.userId?.name || 'Student'}</td>
-                            <td className="py-2.5">{pay.courseId?.title || 'Course'}</td>
-                            <td className="py-2.5">₹{pay.amount.toLocaleString('en-IN')}</td>
-                            <td className="py-2.5 text-right font-semibold text-finance-emerald">{pay.status.toUpperCase()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+              <div className="glass-card rounded-2xl p-5 border border-white/5 space-y-2">
+                <span className="text-gray-400 text-xs font-semibold uppercase">Total Purchases</span>
+                <h3 className="text-2xl font-black text-white font-mono">
+                  {analytics?.totalPurchases || 0}
+                </h3>
               </div>
-            )}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 space-y-2">
+                <span className="text-gray-400 text-xs font-semibold uppercase">Registered Students</span>
+                <h3 className="text-2xl font-black text-emerald-400 font-mono">
+                  {analytics?.totalStudents || 0}
+                </h3>
+              </div>
+            </div>
+
+            {/* RECENT SALES TRANSACTIONS */}
+            <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
+              <h3 className="text-base font-bold text-white">Recent Sales Log</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/5 text-gray-500 pb-2">
+                      <th className="pb-2">Student</th>
+                      <th className="pb-2">Course</th>
+                      <th className="pb-2">Amount</th>
+                      <th className="pb-2">Payment ID</th>
+                      <th className="pb-2">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-gray-300">
+                    {analytics?.recentPurchases?.map(p => (
+                      <tr key={p._id}>
+                        <td className="py-3 font-semibold text-white">{p.userId?.name || 'Student'}</td>
+                        <td className="py-3">{p.courseId?.title || 'Batch Access'}</td>
+                        <td className="py-3 font-mono font-bold text-amber-400">₹{p.amountPaid?.toLocaleString('en-IN')}</td>
+                        <td className="py-3 font-mono text-gray-400">{p.razorpayPaymentId || p._id}</td>
+                        <td className="py-3 text-gray-400">{new Date(p.purchaseDate).toLocaleDateString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
 
-        {/* MANAGE COURSES PANEL */}
+        {/* MANAGE COURSES & SYLLABUS PANEL */}
         {activePanel === 'courses' && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+          <div className="space-y-6">
             
-            {/* Create course */}
-            <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">Create New Course</h3>
-              <form onSubmit={handleCreateCourse} className="space-y-4 text-xs font-semibold text-gray-400">
-                <div>
-                  <label className="block mb-1">Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCourseTitle}
-                    onChange={(e) => setNewCourseTitle(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block mb-1">Price (INR)</label>
-                    <input
-                      type="number"
-                      required
-                      value={newCoursePrice}
-                      onChange={(e) => setNewCoursePrice(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-1">Category</label>
-                    <select
-                      value={newCourseCategory}
-                      onChange={(e) => setNewCourseCategory(e.target.value)}
-                      className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
-                    >
-                      {['Beginner', 'Swing Trading', 'Intraday', 'Options Trading', 'Futures', 'Mutual Funds', 'Technical Analysis', 'Price Action', 'Psychology', 'Portfolio Building'].map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block mb-1">Description</label>
-                  <textarea
-                    rows="3"
-                    value={newCourseDesc}
-                    onChange={(e) => setNewCourseDesc(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold resize-none"
-                  ></textarea>
-                </div>
-                <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold">
-                  Create Course
-                </button>
-              </form>
-            </div>
-
-            {/* Syllabus Builder */}
-            <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-6">
-              <h3 className="text-base font-bold text-white mb-2">Build Syllabus Contents</h3>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
               
-              {/* Select course */}
-              <div className="text-xs font-semibold text-gray-400 space-y-1">
-                <label>Select Target Course</label>
-                <select
-                  value={selectedCourseForLesson}
-                  onChange={(e) => {
-                    setSelectedCourseForLesson(e.target.value);
-                    setSelectedSectionForLesson('');
-                  }}
-                  className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none"
-                >
-                  <option value="">-- Choose Course --</option>
-                  {courses?.map(c => (
-                    <option key={c._id} value={c._id}>{c.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Add Section */}
-              {selectedCourseForLesson && (
-                <form onSubmit={handleAddSection} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 text-xs font-semibold text-gray-400">
-                  <h4 className="font-bold text-white">Add Module Section</h4>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      required
-                      placeholder="E.g. Module 1: Price Action Core"
-                      value={newSectionTitle}
-                      onChange={(e) => setNewSectionTitle(e.target.value)}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
-                    />
-                    <button type="submit" className="bg-finance-gold text-finance-dark px-4 py-2 rounded-xl font-bold">
-                      Add
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Add Lesson */}
-              {selectedCourseForLesson && activeCourseObj?.sections?.length > 0 && (
-                <form onSubmit={handleAddLesson} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 text-xs font-semibold text-gray-400">
-                  <h4 className="font-bold text-white">Add Lesson Material</h4>
-                  <div className="space-y-2">
-                    <label>Select Section Module</label>
-                    <select
-                      required
-                      value={selectedSectionForLesson}
-                      onChange={(e) => setSelectedSectionForLesson(e.target.value)}
-                      className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
-                    >
-                      <option value="">-- Choose Section --</option>
-                      {activeCourseObj.sections.map(s => (
-                        <option key={s._id} value={s._id}>{s.title}</option>
-                      ))}
-                    </select>
-                  </div>
+              {/* Create Course Form */}
+              <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
+                <h3 className="text-base font-bold text-white mb-2">Create New Course</h3>
+                <form onSubmit={handleCreateCourse} className="space-y-4 text-xs font-semibold text-gray-400">
                   <div>
-                    <label>Lesson Title</label>
+                    <label className="block mb-1">Course Title</label>
                     <input
                       type="text"
                       required
-                      value={newLessonTitle}
-                      onChange={(e) => setNewLessonTitle(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                      placeholder="E.g. Options Trading Masterclass"
+                      value={newCourseTitle}
+                      onChange={(e) => setNewCourseTitle(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label>Video Identifier</label>
-                      <input
-                        type="text"
-                        placeholder="E.g. sample_video"
-                        value={newLessonVideo}
-                        onChange={(e) => setNewLessonVideo(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label>Duration (secs)</label>
+                      <label className="block mb-1">Price (INR)</label>
                       <input
                         type="number"
-                        value={newLessonDuration}
-                        onChange={(e) => setNewLessonDuration(e.target.value)}
+                        required
+                        placeholder="2999"
+                        value={newCoursePrice}
+                        onChange={(e) => setNewCoursePrice(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Category</label>
+                      <select
+                        value={newCourseCategory}
+                        onChange={(e) => setNewCourseCategory(e.target.value)}
+                        className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                      >
+                        {['Beginner', 'Swing Trading', 'Intraday', 'Options Trading', 'Futures', 'Mutual Funds', 'Technical Analysis', 'Price Action', 'Psychology', 'Portfolio Building'].map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block mb-1">Course Overview Description</label>
+                    <textarea
+                      rows="3"
+                      required
+                      placeholder="Comprehensive roadmap for learning price action strategies..."
+                      value={newCourseDesc}
+                      onChange={(e) => setNewCourseDesc(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold resize-none"
+                    ></textarea>
+                  </div>
+                  <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold">
+                    Create & Publish Course
+                  </button>
+                </form>
+              </div>
+
+              {/* Syllabus Builder */}
+              <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-6">
+                <h3 className="text-base font-bold text-white mb-2">Build Syllabus & Video Content</h3>
+                
+                {/* Select course */}
+                <div className="text-xs font-semibold text-gray-400 space-y-1">
+                  <label>Select Target Course</label>
+                  <select
+                    value={selectedCourseForLesson}
+                    onChange={(e) => {
+                      setSelectedCourseForLesson(e.target.value);
+                      setSelectedSectionForLesson('');
+                    }}
+                    className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none"
+                  >
+                    <option value="">-- Choose Course --</option>
+                    {courses?.map(c => (
+                      <option key={c._id} value={c._id}>{c.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Add Section */}
+                {selectedCourseForLesson && (
+                  <form onSubmit={handleAddSection} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 text-xs font-semibold text-gray-400">
+                    <h4 className="font-bold text-white">Add Module Section</h4>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="E.g. Module 1: Price Action Core"
+                        value={newSectionTitle}
+                        onChange={(e) => setNewSectionTitle(e.target.value)}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                      />
+                      <button type="submit" className="bg-finance-gold text-finance-dark px-4 py-2 rounded-xl font-bold">
+                        Add
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Add Lesson with Video Link */}
+                {selectedCourseForLesson && activeCourseObj?.sections?.length > 0 && (
+                  <form onSubmit={handleAddLesson} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 text-xs font-semibold text-gray-400">
+                    <h4 className="font-bold text-white flex items-center gap-2">
+                      <FaVideo className="text-finance-gold" /> Add Lesson & Video Link
+                    </h4>
+                    
+                    <div className="space-y-1">
+                      <label>Select Module Section</label>
+                      <select
+                        required
+                        value={selectedSectionForLesson}
+                        onChange={(e) => setSelectedSectionForLesson(e.target.value)}
+                        className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                      >
+                        <option value="">-- Choose Section --</option>
+                        {activeCourseObj.sections.map(s => (
+                          <option key={s._id} value={s._id}>{s.title}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Lesson Title</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="E.g. Understanding Support and Resistance"
+                        value={newLessonTitle}
+                        onChange={(e) => setNewLessonTitle(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
                       />
                     </div>
-                  </div>
-                  <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2 rounded-xl font-bold">
-                    Attach Lesson
-                  </button>
-                </form>
-              )}
+
+                    {/* DEDICATED VIDEO LINK SECTION */}
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
+                      <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                        <FaVideo /> Video URL / Link (YouTube, Vimeo, MP4, Drive)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or MP4 Link"
+                        value={newLessonVideoUrl}
+                        onChange={(e) => setNewLessonVideoUrl(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 outline-none focus:border-amber-400 text-xs font-mono"
+                      />
+                      <p className="text-[10px] text-gray-400">Supports YouTube links, Vimeo links, Google Drive video links, or direct MP4 video URLs.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="flex items-center gap-1"><FaFilePdf /> PDF Notes URL (Optional)</label>
+                        <input
+                          type="url"
+                          placeholder="https://.../notes.pdf"
+                          value={newLessonPdfUrl}
+                          onChange={(e) => setNewLessonPdfUrl(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label>Duration (secs)</label>
+                        <input
+                          type="number"
+                          value={newLessonDuration}
+                          onChange={(e) => setNewLessonDuration(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-1"><FaTasks /> Assignment Details (Optional)</label>
+                      <textarea
+                        rows="2"
+                        placeholder="Practice identifying support levels on Nifty 50 chart..."
+                        value={newLessonAssignment}
+                        onChange={(e) => setNewLessonAssignment(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none resize-none"
+                      ></textarea>
+                    </div>
+
+                    <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
+                      <FaPlus /> Attach Lesson to Syllabus
+                    </button>
+                  </form>
+                )}
+              </div>
+
             </div>
 
-            {/* Courses List */}
-            <div className="xl:col-span-2 glass-card rounded-2xl p-6 border border-white/5 space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">Active Courses Catalog</h3>
+            {/* Courses Catalog Directory */}
+            <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
+              <h3 className="text-base font-bold text-white mb-2">Active Courses Directory</h3>
               <div className="divide-y divide-white/5">
                 {courses?.map(c => (
-                  <div key={c._id} className="py-3 flex justify-between items-center text-xs">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{c.title}</h4>
-                      <p className="text-gray-500 font-mono mt-0.5">Price: ₹{c.price.toLocaleString('en-IN')} | Category: {c.category}</p>
+                  <div key={c._id} className="py-4 flex justify-between items-center text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white text-base">{c.title}</h4>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.isPublished !== false ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                          {c.isPublished !== false ? 'Published' : 'Draft / Unpublished'}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 font-mono">
+                        Price: ₹{c.price.toLocaleString('en-IN')} | Category: {c.category} | Sections: {c.sections?.length || 0}
+                      </p>
                     </div>
-                    <button 
-                      onClick={() => deleteCourseMutation.mutate(c._id)}
-                      className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-xl"
-                    >
-                      <FaTrash />
-                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => togglePublishMutation.mutate({ id: c._id, isPublished: c.isPublished === false })}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold border transition ${c.isPublished !== false ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'}`}
+                      >
+                        {c.isPublished !== false ? <><FaEyeSlash /> Unpublish</> : <><FaEye /> Publish</>}
+                      </button>
+
+                      <button 
+                        onClick={() => deleteCourseMutation.mutate(c._id)}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-xl"
+                        title="Delete Course"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -647,42 +716,39 @@ export function AdminDashboard() {
               </div>
 
               <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
-                <FaBullhorn />
-                <span>Publish & Notify Students</span>
+                <FaBullhorn /> Broadcast Announcement
               </button>
             </form>
           </div>
         )}
 
-        {/* STUDENTS LIST */}
+        {/* STUDENT DIRECTORY PANEL */}
         {activePanel === 'students' && (
           <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
-            <h3 className="text-base font-bold text-white mb-2">Registered Students Registry</h3>
+            <h3 className="text-base font-bold text-white mb-2">Student Enrolments & Directory</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-white/5 text-gray-500 pb-2">
                     <th className="pb-2">Name</th>
                     <th className="pb-2">Email</th>
-                    <th className="pb-2">Streak</th>
-                    <th className="pb-2">Unlocked Batches</th>
-                    <th className="pb-2 text-right">Verified</th>
+                    <th className="pb-2">Role</th>
+                    <th className="pb-2">Provider</th>
+                    <th className="pb-2">Joined Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-gray-300">
                   {students?.map(s => (
                     <tr key={s._id}>
-                      <td className="py-3 font-semibold text-white">{s.name}</td>
-                      <td className="py-3">{s.email}</td>
-                      <td className="py-3">🔥 {s.streakCount}</td>
-                      <td className="py-3 max-w-[200px] truncate">{s.purchasedCourses?.join(', ') || 'None'}</td>
-                      <td className="py-3 text-right">
-                        {s.isVerified ? (
-                          <span className="text-finance-emerald font-semibold uppercase text-[9px] bg-finance-emerald/10 px-2 py-0.5 rounded border border-finance-emerald/20">YES</span>
-                        ) : (
-                          <span className="text-gray-500 font-semibold uppercase text-[9px] bg-white/5 px-2 py-0.5 rounded border border-white/10">NO</span>
-                        )}
+                      <td className="py-3 font-bold text-white">{s.name}</td>
+                      <td className="py-3 font-mono">{s.email}</td>
+                      <td className="py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                          {s.role}
+                        </span>
                       </td>
+                      <td className="py-3 capitalize">{s.provider || 'email'}</td>
+                      <td className="py-3 text-gray-400">{new Date(s.createdAt).toLocaleDateString('en-IN')}</td>
                     </tr>
                   ))}
                 </tbody>

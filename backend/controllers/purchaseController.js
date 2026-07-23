@@ -45,15 +45,16 @@ const getBatchDetails = async (req, res, next) => {
     // Generate secure expiring signed URLs for all videos in sections
     const enrichedSections = course.sections.map(section => {
       const sanitizedLessons = section.lessons.map(lesson => {
-        const videoStreamUrl = lesson.videoPublicId 
+        const videoStreamUrl = lesson.videoUrl || (lesson.videoPublicId 
           ? videoService.generateSecureStreamingUrl(lesson.videoPublicId)
-          : '';
+          : '');
         return {
           _id: lesson._id,
           title: lesson.title,
           description: lesson.description,
+          videoUrl: lesson.videoUrl || '',
           videoDuration: lesson.videoDuration,
-          videoStreamUrl, // Expiring signed URL
+          videoStreamUrl, // Video URL or expiring signed Cloudinary URL
           pdfUrl: lesson.pdfUrl,
           assignment: lesson.assignment,
           quiz: lesson.quiz

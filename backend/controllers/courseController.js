@@ -5,11 +5,11 @@ const response = require('../helpers/response');
 // GET /api/courses
 const getCourses = async (req, res, next) => {
   try {
-    const { category, search, publishedOnly = 'true' } = req.query;
+    const { category, search, publishedOnly } = req.query;
     const filter = {};
 
     if (publishedOnly === 'true') {
-      filter.isPublished = true;
+      filter.isPublished = { $ne: false };
     }
 
     if (category) {
@@ -23,9 +23,8 @@ const getCourses = async (req, res, next) => {
       ];
     }
 
-    // Projects list optimized
     const courses = await Course.find(filter)
-      .select('title slug description instructor duration price discount rating thumbnail category benefits createdAt')
+      .select('title slug description instructor duration price discount rating thumbnail category benefits isPublished createdAt')
       .sort('-createdAt');
 
     return response.success(res, courses, 'Courses fetched successfully');
@@ -44,7 +43,6 @@ const getCourse = async (req, res, next) => {
       return response.error(res, 'Course not found', 404);
     }
 
-    // Sanitize sections: remove videoPublicId, pdfUrl, assignment, and quiz keys for public view
     const sanitizedSections = course.sections.map(section => ({
       _id: section._id,
       title: section.title,
@@ -52,6 +50,7 @@ const getCourse = async (req, res, next) => {
         _id: lesson._id,
         title: lesson.title,
         description: lesson.description,
+        videoUrl: lesson.videoUrl || '',
         videoDuration: lesson.videoDuration
       }))
     }));
@@ -68,7 +67,7 @@ const getCourse = async (req, res, next) => {
 // POST /api/courses (Admin Only)
 const createCourse = async (req, res, next) => {
   try {
-    const { title, description, instructor, duration, price, discount, category, benefits, faqs } = req.body;
+    const { title, description, instructor, duration, price, discount, category, benefits, faqs, isPublished } = req.body;
     
     // Auto generate slug
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -82,14 +81,15 @@ const createCourse = async (req, res, next) => {
       title,
       slug,
       description,
-      instructor,
-      duration,
+      instructor: instructor || 'Dhan Vijeta Team',
+      duration: duration || '0 hours',
       price,
-      discount,
+      discount: discount || 0,
       category,
       benefits: benefits || [],
       faqs: faqs || [],
-      sections: []
+      sections: [],
+      isPublished: isPublished !== undefined ? isPublished : true
     });
 
     return response.success(res, course, 'Course created successfully', 201);
@@ -157,7 +157,7 @@ const addSection = async (req, res, next) => {
 const addLesson = async (req, res, next) => {
   try {
     const { id, sectionId } = req.params;
-    const { title, description, videoPublicId, videoDuration, pdfUrl, assignment } = req.body;
+    const { title, description, videoUrl, videoLink, videoPublicId, videoDuration, pdfUrl, assignment } = req.body;
 
     const course = await Course.findById(id);
     if (!course) {
@@ -171,7 +171,8 @@ const addLesson = async (req, res, next) => {
 
     section.lessons.push({
       title,
-      description,
+      description: description || '',
+      videoUrl: videoUrl || videoLink || '',
       videoPublicId: videoPublicId || '',
       videoDuration: videoDuration || 0,
       pdfUrl: pdfUrl || '',

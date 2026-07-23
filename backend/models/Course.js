@@ -10,6 +10,10 @@ const lessonSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  videoUrl: {
+    type: String, // Direct video URL, YouTube link, Vimeo link, Google Drive link, etc.
+    default: ''
+  },
   videoPublicId: {
     type: String, // Cloudinary secure public ID or placeholder local relative path
     default: ''
@@ -117,7 +121,7 @@ const courseSchema = new mongoose.Schema(
     benefits: [String],
     isPublished: {
       type: Boolean,
-      default: false
+      default: true
     }
   },
   {
