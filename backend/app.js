@@ -37,7 +37,10 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://dhanvijeta.in',
+  'https://www.dhanvijeta.in',
   'https://dhanvijeta.vercel.app',
+  'https://dhanvijeta-1.onrender.com',
   ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
 ];
 

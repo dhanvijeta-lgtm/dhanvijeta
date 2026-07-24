@@ -299,7 +299,7 @@ const googleAuth = async (req, res, next) => {
 
     if (!targetToken && !targetAccessToken && req.method === 'GET') {
       const clientId = process.env.GOOGLE_CLIENT_ID || '48923631189-1gg32pij6ta55715ag4ij3bt15oi4cc9.apps.googleusercontent.com';
-      const callbackUrl = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
+      const callbackUrl = process.env.GOOGLE_CALLBACK_URL || 'https://dhanvijeta-1.onrender.com/api/auth/google/callback';
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=openid%20profile%20email`;
       return res.redirect(googleAuthUrl);
     }

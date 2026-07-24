@@ -80,6 +80,7 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
     amount: finalPrice,
     currency: 'INR',
     receipt: receiptId,
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_THDf7tFOmnPEur',
     isMock: useMockPayment
   };
 };

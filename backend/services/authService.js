@@ -281,7 +281,7 @@ const googleLoginUser = async ({ idToken, accessToken, credential, token }) => {
 const googleCallbackCodeExchange = async (code, customRedirectUri) => {
   const clientId = getGoogleClientId();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const callbackUrl = customRedirectUri || process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
+  const callbackUrl = customRedirectUri || process.env.GOOGLE_CALLBACK_URL || 'https://dhanvijeta-1.onrender.com/api/auth/google/callback';
 
   console.log('[Google Auth Debug] Initiating code exchange. Callback URL:', callbackUrl);
 
