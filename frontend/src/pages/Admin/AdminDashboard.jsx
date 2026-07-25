@@ -303,6 +303,9 @@ export function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success('Course details updated successfully!');
       setEditingCourse(null);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to update course details');
     }
   });
 
@@ -446,12 +449,22 @@ export function AdminDashboard() {
 
   const handleSaveEditCourse = (e) => {
     e.preventDefault();
-    if (!editingCourse || !editCourseTitle || editCoursePrice === '') return;
+    if (!editingCourse) return;
+
+    if (!editCourseTitle || !editCourseTitle.trim()) {
+      toast.error('Course title is required');
+      return;
+    }
+
+    if (editCoursePrice === '' || editCoursePrice === null || editCoursePrice === undefined || isNaN(Number(editCoursePrice))) {
+      toast.error('Please enter a valid course price (0 for Free)');
+      return;
+    }
 
     updateCourseMutation.mutate({
       id: editingCourse._id,
       payload: {
-        title: editCourseTitle,
+        title: editCourseTitle.trim(),
         price: Number(editCoursePrice),
         discount: Number(editCourseDiscount) || 0,
         category: editCourseCategory,
@@ -1487,7 +1500,6 @@ export function AdminDashboard() {
                 <label className="block mb-1">Course Overview Description</label>
                 <textarea
                   rows="3"
-                  required
                   value={editCourseDesc}
                   onChange={(e) => setEditCourseDesc(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold resize-none"
@@ -1504,10 +1516,16 @@ export function AdminDashboard() {
                 </button>
                 <button
                   type="submit"
-                  disabled={uploadingEditCourseThumb}
-                  className="px-6 py-2 rounded-xl bg-finance-gold text-finance-dark font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+                  disabled={uploadingEditCourseThumb || updateCourseMutation.isPending}
+                  className="px-6 py-2 rounded-xl bg-finance-gold text-finance-dark font-bold hover:bg-yellow-400 transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  Save Course Changes
+                  {updateCourseMutation.isPending ? (
+                    <>
+                      <FaSpinner className="animate-spin" /> Saving Changes...
+                    </>
+                  ) : (
+                    'Save Course Changes'
+                  )}
                 </button>
               </div>
             </form>
