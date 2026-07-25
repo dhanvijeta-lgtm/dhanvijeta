@@ -23,23 +23,52 @@ const getBatchDetails = async (req, res, next) => {
   try {
     const { courseId } = req.params;
 
-    const purchase = await Purchase.findOne({
+    let purchase = await Purchase.findOne({
       userId: req.user.id,
       courseId,
       paymentStatus: 'completed'
     }).populate('certificateId');
 
-    if (!purchase) {
-      return response.error(
-        res,
-        'You have not purchased this course yet or your payment is pending.',
-        403
-      );
-    }
-
     const course = await Course.findById(courseId);
     if (!course) {
       return response.error(res, 'Course not found', 404);
+    }
+
+    if (!purchase) {
+      // If course is free (price === 0 or 100% discount), auto-enroll user
+      const isFreeCourse = course.price === 0 || course.discount === 100;
+      if (isFreeCourse) {
+        const Payment = require('../models/Payment');
+        const crypto = require('crypto');
+        const freeOrderId = `free_order_${crypto.randomBytes(8).toString('hex')}`;
+        
+        const freePayment = await Payment.create({
+          userId: req.user.id,
+          courseId,
+          orderId: freeOrderId,
+          paymentId: `free_enroll_${crypto.randomBytes(6).toString('hex')}`,
+          amount: 0,
+          status: 'captured'
+        });
+
+        purchase = await Purchase.create({
+          userId: req.user.id,
+          courseId,
+          paymentId: freePayment._id,
+          paymentStatus: 'completed',
+          purchaseDate: new Date(),
+          progress: { completedLessons: [] },
+          completionPercentage: 0,
+          hoursWatched: 0,
+          certificateIssued: false
+        });
+      } else {
+        return response.error(
+          res,
+          'You have not purchased this course yet or your payment is pending.',
+          403
+        );
+      }
     }
 
     // Generate secure expiring signed URLs for all videos in sections

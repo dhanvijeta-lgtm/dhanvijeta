@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import client from '../api/client';
 import { useAuth } from '../store/authContext';
-import { FaRegClock, FaStar, FaUser, FaCheck, FaTags, FaLock } from 'react-icons/fa';
+import { FaRegClock, FaStar, FaUser, FaCheck, FaTags, FaLock, FaPlayCircle } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 export function CourseDetails({ onOpenLogin }) {
@@ -23,6 +23,17 @@ export function CourseDetails({ onOpenLogin }) {
       const res = await client.get(`/courses/${slug}`);
       return res.data.data;
     }
+  });
+
+  // Fetch student purchases if logged in to check enrollment status
+  const { data: myPurchases } = useQuery({
+    queryKey: ['my-purchases'],
+    queryFn: async () => {
+      if (!isLoggedIn) return [];
+      const res = await client.get('/my-batch');
+      return res.data.data;
+    },
+    enabled: !!isLoggedIn
   });
 
   if (isLoading) {
@@ -55,6 +66,8 @@ export function CourseDetails({ onOpenLogin }) {
     : initialDiscountPrice;
 
   const isFree = currentPrice <= 0 || basePrice === 0;
+  const isEnrolled = myPurchases?.some(p => p.courseId?._id === course?._id || p.courseId === course?._id);
+  const isUnlocked = isFree || isEnrolled;
 
   // Coupon verification
   const handleApplyCoupon = async () => {
@@ -208,12 +221,38 @@ export function CourseDetails({ onOpenLogin }) {
                 {openSection === idx && (
                   <div className="border-t border-white/5 divide-y divide-white/5 bg-white/[0.01]">
                     {section.lessons.map((lesson) => (
-                      <div key={lesson._id} className="p-4 pl-6 flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-gray-300 flex items-center gap-2">
-                          <FaLock className="text-gray-500 shrink-0" size={10} />
-                          <span>{lesson.title}</span>
+                      <div
+                        key={lesson._id}
+                        onClick={() => {
+                          if (isUnlocked) {
+                            if (!isLoggedIn) {
+                              toast.error('Please sign in to watch free course lessons.');
+                              onOpenLogin();
+                            } else {
+                              navigate(`/my-batch/${course._id}?lessonId=${lesson._id}`);
+                            }
+                          }
+                        }}
+                        className={`p-4 pl-6 flex items-center justify-between text-xs sm:text-sm transition ${
+                          isUnlocked ? 'cursor-pointer hover:bg-white/5 text-white' : ''
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {isUnlocked ? (
+                            <FaPlayCircle className="text-emerald-400 shrink-0" size={14} />
+                          ) : (
+                            <FaLock className="text-gray-500 shrink-0" size={10} />
+                          )}
+                          <span className={isUnlocked ? 'text-emerald-300 font-semibold' : 'text-gray-300'}>{lesson.title}</span>
                         </span>
-                        <span className="text-gray-500 font-mono text-xs">{Math.round(lesson.videoDuration / 60)}m</span>
+                        <div className="flex items-center gap-3">
+                          {isUnlocked && (
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold uppercase">
+                              Play Lesson
+                            </span>
+                          )}
+                          <span className="text-gray-500 font-mono text-xs">{Math.round(lesson.videoDuration / 60)}m</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -274,15 +313,27 @@ export function CourseDetails({ onOpenLogin }) {
 
           {/* Checkout CTA */}
           <button
-            onClick={handleBuyNow}
+            onClick={isEnrolled ? () => navigate(`/my-batch/${course._id}`) : handleBuyNow}
             disabled={checkoutLoading}
-            className={`w-full font-extrabold text-center py-4 rounded-xl transition disabled:opacity-50 ${
-              isFree
+            className={`w-full font-extrabold text-center py-4 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 ${
+              isUnlocked
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-finance-dark shadow-emerald-glow'
                 : 'bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-finance-dark shadow-gold-glow'
             }`}
           >
-            {checkoutLoading ? (isFree ? 'Enrolling...' : 'Redirecting to checkout...') : (isFree ? 'Enroll for Free' : 'Enroll / Buy Now')}
+            {checkoutLoading ? (
+              isFree ? 'Enrolling...' : 'Redirecting to checkout...'
+            ) : isEnrolled ? (
+              <>
+                <FaPlayCircle size={18} /> Go to My Batch / Watch Course
+              </>
+            ) : isFree ? (
+              <>
+                <FaPlayCircle size={18} /> Enroll & Watch for Free
+              </>
+            ) : (
+              'Enroll / Buy Now'
+            )}
           </button>
 
           {/* Coupon inputs */}
