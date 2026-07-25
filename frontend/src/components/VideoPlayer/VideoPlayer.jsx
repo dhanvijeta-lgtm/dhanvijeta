@@ -20,7 +20,7 @@ const getEmbedUrl = (url) => {
   return null;
 };
 
-export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
+export function VideoPlayer({ src, poster, onTimeUpdate, onEnded }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -129,6 +129,7 @@ export function VideoPlayer({ src, onTimeUpdate, onEnded }) {
       <video
         ref={videoRef}
         src={src}
+        poster={poster}
         className="w-full h-full cursor-pointer object-cover"
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}

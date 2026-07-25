@@ -11,6 +11,7 @@ const notificationRoutes = require('./notificationRoutes');
 const blogRoutes = require('./blogRoutes');
 const adminRoutes = require('./adminRoutes');
 const certificateRoutes = require('./certificateRoutes');
+const uploadRoutes = require('./uploadRoutes');
 
 // API Health endpoints
 router.get('/', (req, res) => {
@@ -44,5 +45,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/blogs', blogRoutes);
 router.use('/admin', adminRoutes);
 router.use('/certificates', certificateRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;

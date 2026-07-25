@@ -55,6 +55,7 @@ const getBatchDetails = async (req, res, next) => {
           videoUrl: lesson.videoUrl || '',
           videoDuration: lesson.videoDuration,
           videoStreamUrl, // Video URL or expiring signed Cloudinary URL
+          thumbnail: lesson.thumbnail || '',
           pdfUrl: lesson.pdfUrl,
           assignment: lesson.assignment,
           quiz: lesson.quiz

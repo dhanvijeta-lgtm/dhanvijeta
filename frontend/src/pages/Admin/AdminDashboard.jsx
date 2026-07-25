@@ -1,18 +1,42 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
-import { FaWallet, FaUsers, FaBook, FaTags, FaBullhorn, FaPlus, FaTrash, FaCheck, FaVideo, FaEye, FaEyeSlash, FaFilePdf, FaTasks } from 'react-icons/fa';
+import {
+  FaWallet,
+  FaUsers,
+  FaBook,
+  FaTags,
+  FaBullhorn,
+  FaPlus,
+  FaTrash,
+  FaCheck,
+  FaVideo,
+  FaEye,
+  FaEyeSlash,
+  FaFilePdf,
+  FaTasks,
+  FaCloudUploadAlt,
+  FaEdit,
+  FaImage,
+  FaSpinner,
+  FaPlayCircle,
+  FaTimes
+} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 export function AdminDashboard() {
   const queryClient = useQueryClient();
   const [activePanel, setActivePanel] = useState('overview'); // overview | courses | coupons | announcements | students
 
-  // Courses Creation State
+  // Course Creation State
   const [newCourseTitle, setNewCourseTitle] = useState('');
   const [newCoursePrice, setNewCoursePrice] = useState('');
   const [newCourseCategory, setNewCourseCategory] = useState('Beginner');
   const [newCourseDesc, setNewCourseDesc] = useState('');
+  const [newCourseThumbnail, setNewCourseThumbnail] = useState('');
+  const [newCourseThumbnailPublicId, setNewCourseThumbnailPublicId] = useState('');
+  const [uploadingCourseThumb, setUploadingCourseThumb] = useState(false);
+  const [courseThumbProgress, setCourseThumbProgress] = useState(0);
 
   // Coupon Creation State
   const [newCouponCode, setNewCouponCode] = useState('');
@@ -32,13 +56,43 @@ export function AdminDashboard() {
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [newLessonDesc, setNewLessonDesc] = useState('');
   const [newLessonVideoUrl, setNewLessonVideoUrl] = useState('');
-  const [newLessonVideo, setNewLessonVideo] = useState('');
+  const [newLessonVideoPublicId, setNewLessonVideoPublicId] = useState('');
+  const [newLessonVideoDuration, setNewLessonVideoDuration] = useState('600');
+  const [newLessonVideoSize, setNewLessonVideoSize] = useState(0);
+  const [newLessonVideoFormat, setNewLessonVideoFormat] = useState('');
+  const [newLessonThumbnail, setNewLessonThumbnail] = useState('');
+  const [newLessonThumbnailPublicId, setNewLessonThumbnailPublicId] = useState('');
   const [newLessonPdfUrl, setNewLessonPdfUrl] = useState('');
   const [newLessonAssignment, setNewLessonAssignment] = useState('');
-  const [newLessonDuration, setNewLessonDuration] = useState('600');
+
+  // Upload States for New Lesson
+  const [uploadingLessonVideo, setUploadingLessonVideo] = useState(false);
+  const [lessonVideoProgress, setLessonVideoProgress] = useState(0);
+  const [uploadingLessonThumb, setUploadingLessonThumb] = useState(false);
+  const [lessonThumbProgress, setLessonThumbProgress] = useState(0);
+
+  // Lesson Edit State
+  const [editingLesson, setEditingLesson] = useState(null); // { courseId, sectionId, lesson }
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editVideoUrl, setEditVideoUrl] = useState('');
+  const [editVideoPublicId, setEditVideoPublicId] = useState('');
+  const [editVideoDuration, setEditVideoDuration] = useState(0);
+  const [editVideoSize, setEditVideoSize] = useState(0);
+  const [editVideoFormat, setEditVideoFormat] = useState('');
+  const [editThumbnail, setEditThumbnail] = useState('');
+  const [editThumbnailPublicId, setEditThumbnailPublicId] = useState('');
+  const [editPdfUrl, setEditPdfUrl] = useState('');
+  const [editAssignment, setEditAssignment] = useState('');
+
+  // Upload States for Edit Lesson
+  const [uploadingEditVideo, setUploadingEditVideo] = useState(false);
+  const [editVideoProgress, setEditVideoProgress] = useState(0);
+  const [uploadingEditThumb, setUploadingEditThumb] = useState(false);
+  const [editThumbProgress, setEditThumbProgress] = useState(0);
 
   // Fetch admin dashboard analytics
-  const { data: analytics, isLoading: loadingAnalytics } = useQuery({
+  const { data: analytics } = useQuery({
     queryKey: ['admin-analytics'],
     queryFn: async () => {
       const res = await client.get('/admin/analytics');
@@ -73,7 +127,129 @@ export function AdminDashboard() {
     }
   });
 
-  // Mutations
+  // UPLOAD HANDLERS
+  const handleUploadCourseThumbnail = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    setUploadingCourseThumb(true);
+    setCourseThumbProgress(0);
+
+    try {
+      const res = await client.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt) => {
+          const percent = Math.round((evt.loaded * 100) / evt.total);
+          setCourseThumbProgress(percent);
+        }
+      });
+      setNewCourseThumbnail(res.data.data.url);
+      setNewCourseThumbnailPublicId(res.data.data.public_id);
+      toast.success('Course thumbnail uploaded to Cloudinary!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Course thumbnail upload failed');
+    } finally {
+      setUploadingCourseThumb(false);
+    }
+  };
+
+  const handleUploadModuleThumbnail = async (e, isEdit = false) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    if (isEdit) {
+      setUploadingEditThumb(true);
+      setEditThumbProgress(0);
+    } else {
+      setUploadingLessonThumb(true);
+      setLessonThumbProgress(0);
+    }
+
+    try {
+      const res = await client.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt) => {
+          const percent = Math.round((evt.loaded * 100) / evt.total);
+          if (isEdit) setEditThumbProgress(percent);
+          else setLessonThumbProgress(percent);
+        }
+      });
+
+      if (isEdit) {
+        setEditThumbnail(res.data.data.url);
+        setEditThumbnailPublicId(res.data.data.public_id);
+      } else {
+        setNewLessonThumbnail(res.data.data.url);
+        setNewLessonThumbnailPublicId(res.data.data.public_id);
+      }
+      toast.success('Module thumbnail uploaded successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Module thumbnail upload failed');
+    } finally {
+      if (isEdit) setUploadingEditThumb(false);
+      else setUploadingLessonThumb(false);
+    }
+  };
+
+  const handleUploadVideoFile = async (e, isEdit = false) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('video', file);
+
+    if (isEdit) {
+      setUploadingEditVideo(true);
+      setEditVideoProgress(0);
+    } else {
+      setUploadingLessonVideo(true);
+      setLessonVideoProgress(0);
+    }
+
+    try {
+      const res = await client.post('/upload/video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt) => {
+          const percent = Math.round((evt.loaded * 100) / evt.total);
+          if (isEdit) setEditVideoProgress(percent);
+          else setLessonVideoProgress(percent);
+        }
+      });
+
+      const { videoUrl, videoPublicId, videoDuration, videoSize, videoFormat, thumbnail } = res.data.data;
+
+      if (isEdit) {
+        setEditVideoUrl(videoUrl);
+        setEditVideoPublicId(videoPublicId);
+        setEditVideoDuration(videoDuration);
+        setEditVideoSize(videoSize);
+        setEditVideoFormat(videoFormat);
+        if (thumbnail && !editThumbnail) setEditThumbnail(thumbnail);
+      } else {
+        setNewLessonVideoUrl(videoUrl);
+        setNewLessonVideoPublicId(videoPublicId);
+        setNewLessonVideoDuration(videoDuration || 600);
+        setNewLessonVideoSize(videoSize);
+        setNewLessonVideoFormat(videoFormat);
+        if (thumbnail && !newLessonThumbnail) setNewLessonThumbnail(thumbnail);
+      }
+
+      toast.success('Video uploaded to Cloudinary successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Video upload failed');
+    } finally {
+      if (isEdit) setUploadingEditVideo(false);
+      else setUploadingLessonVideo(false);
+    }
+  };
+
+  // MUTATIONS
   const createCourseMutation = useMutation({
     mutationFn: async (payload) => {
       await client.post('/courses', payload);
@@ -85,6 +261,8 @@ export function AdminDashboard() {
       setNewCourseTitle('');
       setNewCoursePrice('');
       setNewCourseDesc('');
+      setNewCourseThumbnail('');
+      setNewCourseThumbnailPublicId('');
     }
   });
 
@@ -130,7 +308,7 @@ export function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Course deleted');
+      toast.success('Course and media assets deleted!');
     }
   });
 
@@ -161,16 +339,43 @@ export function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
-      toast.success('Lesson with video attached successfully!');
+      toast.success('Module lesson attached with Cloudinary video!');
       setNewLessonTitle('');
       setNewLessonDesc('');
       setNewLessonVideoUrl('');
-      setNewLessonVideo('');
+      setNewLessonVideoPublicId('');
+      setNewLessonVideoDuration('600');
+      setNewLessonVideoSize(0);
+      setNewLessonVideoFormat('');
+      setNewLessonThumbnail('');
+      setNewLessonThumbnailPublicId('');
       setNewLessonPdfUrl('');
       setNewLessonAssignment('');
     }
   });
 
+  const updateLessonMutation = useMutation({
+    mutationFn: async ({ courseId, sectionId, lessonId, payload }) => {
+      await client.put(`/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      toast.success('Module lesson updated successfully!');
+      setEditingLesson(null);
+    }
+  });
+
+  const deleteLessonMutation = useMutation({
+    mutationFn: async ({ courseId, sectionId, lessonId }) => {
+      await client.delete(`/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      toast.success('Module lesson and video deleted!');
+    }
+  });
+
+  // SUBMIT HANDLERS
   const handleCreateCourse = (e) => {
     e.preventDefault();
     if (!newCourseTitle || !newCoursePrice) return;
@@ -180,6 +385,8 @@ export function AdminDashboard() {
       category: newCourseCategory,
       description: newCourseDesc,
       instructor: 'Dhan Vijeta Team',
+      thumbnail: newCourseThumbnail,
+      thumbnailPublicId: newCourseThumbnailPublicId,
       isPublished: true
     });
   };
@@ -225,16 +432,59 @@ export function AdminDashboard() {
       payload: {
         title: newLessonTitle,
         description: newLessonDesc,
-        videoUrl: newLessonVideoUrl || newLessonVideo,
-        videoPublicId: newLessonVideo,
-        videoDuration: Number(newLessonDuration),
+        videoUrl: newLessonVideoUrl,
+        videoPublicId: newLessonVideoPublicId,
+        videoDuration: Number(newLessonVideoDuration),
+        videoSize: newLessonVideoSize,
+        videoFormat: newLessonVideoFormat,
+        thumbnail: newLessonThumbnail,
+        thumbnailPublicId: newLessonThumbnailPublicId,
         pdfUrl: newLessonPdfUrl,
         assignment: newLessonAssignment
       }
     });
   };
 
-  const activeCourseObj = courses?.find(c => c._id === selectedCourseForLesson);
+  const openEditLessonModal = (courseId, sectionId, lesson) => {
+    setEditingLesson({ courseId, sectionId, lessonId: lesson._id });
+    setEditTitle(lesson.title || '');
+    setEditDesc(lesson.description || '');
+    setEditVideoUrl(lesson.videoUrl || '');
+    setEditVideoPublicId(lesson.videoPublicId || '');
+    setEditVideoDuration(lesson.videoDuration || 0);
+    setEditVideoSize(lesson.videoSize || 0);
+    setEditVideoFormat(lesson.videoFormat || '');
+    setEditThumbnail(lesson.thumbnail || '');
+    setEditThumbnailPublicId(lesson.thumbnailPublicId || '');
+    setEditPdfUrl(lesson.pdfUrl || '');
+    setEditAssignment(lesson.assignment || '');
+  };
+
+  const handleSaveEditLesson = (e) => {
+    e.preventDefault();
+    if (!editingLesson) return;
+
+    updateLessonMutation.mutate({
+      courseId: editingLesson.courseId,
+      sectionId: editingLesson.sectionId,
+      lessonId: editingLesson.lessonId,
+      payload: {
+        title: editTitle,
+        description: editDesc,
+        videoUrl: editVideoUrl,
+        videoPublicId: editVideoPublicId,
+        videoDuration: Number(editVideoDuration),
+        videoSize: Number(editVideoSize),
+        videoFormat: editVideoFormat,
+        thumbnail: editThumbnail,
+        thumbnailPublicId: editThumbnailPublicId,
+        pdfUrl: editPdfUrl,
+        assignment: editAssignment
+      }
+    });
+  };
+
+  const activeCourseObj = courses?.find((c) => c._id === selectedCourseForLesson);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -319,7 +569,7 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
-                    {analytics?.recentPurchases?.map(p => (
+                    {analytics?.recentPurchases?.map((p) => (
                       <tr key={p._id}>
                         <td className="py-3 font-semibold text-white">{p.userId?.name || 'Student'}</td>
                         <td className="py-3">{p.courseId?.title || 'Batch Access'}</td>
@@ -357,6 +607,7 @@ export function AdminDashboard() {
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
                     />
                   </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block mb-1">Price (INR)</label>
@@ -376,12 +627,62 @@ export function AdminDashboard() {
                         onChange={(e) => setNewCourseCategory(e.target.value)}
                         className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
                       >
-                        {['Beginner', 'Swing Trading', 'Intraday', 'Options Trading', 'Futures', 'Mutual Funds', 'Technical Analysis', 'Price Action', 'Psychology', 'Portfolio Building'].map(cat => (
+                        {['Beginner', 'Swing Trading', 'Intraday', 'Options Trading', 'Futures', 'Mutual Funds', 'Technical Analysis', 'Price Action', 'Psychology', 'Portfolio Building'].map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
                       </select>
                     </div>
                   </div>
+
+                  {/* COURSE THUMBNAIL UPLOAD */}
+                  <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
+                    <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                      <FaImage /> Upload Course Thumbnail (Cloudinary)
+                    </label>
+                    
+                    {newCourseThumbnail ? (
+                      <div className="relative rounded-xl overflow-hidden group border border-white/10">
+                        <img src={newCourseThumbnail} alt="Course Thumbnail" className="w-full h-32 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewCourseThumbnail('');
+                            setNewCourseThumbnailPublicId('');
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition"
+                        >
+                          <FaTimes size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 hover:border-finance-gold/50 transition">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadCourseThumbnail}
+                          disabled={uploadingCourseThumb}
+                          className="hidden"
+                          id="course-thumb-file"
+                        />
+                        <label htmlFor="course-thumb-file" className="cursor-pointer flex flex-col items-center gap-1">
+                          {uploadingCourseThumb ? (
+                            <FaSpinner className="animate-spin text-finance-gold text-2xl" />
+                          ) : (
+                            <FaCloudUploadAlt className="text-finance-gold text-2xl" />
+                          )}
+                          <span className="text-gray-300 font-semibold">
+                            {uploadingCourseThumb ? `Uploading... ${courseThumbProgress}%` : 'Click to Upload Course Image'}
+                          </span>
+                        </label>
+                        {uploadingCourseThumb && (
+                          <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+                            <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${courseThumbProgress}%` }}></div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block mb-1">Course Overview Description</label>
                     <textarea
@@ -393,7 +694,12 @@ export function AdminDashboard() {
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold resize-none"
                     ></textarea>
                   </div>
-                  <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold">
+
+                  <button
+                    type="submit"
+                    disabled={uploadingCourseThumb}
+                    className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold disabled:opacity-50"
+                  >
                     Create & Publish Course
                   </button>
                 </form>
@@ -415,7 +721,7 @@ export function AdminDashboard() {
                     className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none"
                   >
                     <option value="">-- Choose Course --</option>
-                    {courses?.map(c => (
+                    {courses?.map((c) => (
                       <option key={c._id} value={c._id}>{c.title}</option>
                     ))}
                   </select>
@@ -441,11 +747,11 @@ export function AdminDashboard() {
                   </form>
                 )}
 
-                {/* Add Lesson with Video Link */}
+                {/* Add Lesson with Video & Thumbnail Upload */}
                 {selectedCourseForLesson && activeCourseObj?.sections?.length > 0 && (
                   <form onSubmit={handleAddLesson} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 text-xs font-semibold text-gray-400">
                     <h4 className="font-bold text-white flex items-center gap-2">
-                      <FaVideo className="text-finance-gold" /> Add Lesson & Video Link
+                      <FaVideo className="text-finance-gold" /> Add Module Lesson
                     </h4>
                     
                     <div className="space-y-1">
@@ -457,7 +763,7 @@ export function AdminDashboard() {
                         className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
                       >
                         <option value="">-- Choose Section --</option>
-                        {activeCourseObj.sections.map(s => (
+                        {activeCourseObj.sections.map((s) => (
                           <option key={s._id} value={s._id}>{s.title}</option>
                         ))}
                       </select>
@@ -475,19 +781,108 @@ export function AdminDashboard() {
                       />
                     </div>
 
-                    {/* DEDICATED VIDEO LINK SECTION */}
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
+                    {/* DIRECT CLOUDINARY VIDEO UPLOAD & PREVIEW */}
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
                       <label className="text-amber-300 font-bold flex items-center gap-1.5">
-                        <FaVideo /> Video URL / Link (YouTube, Vimeo, MP4, Drive)
+                        <FaVideo /> Video File Upload (MP4, MOV, AVI, MKV, WEBM)
                       </label>
+                      
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="file"
+                          accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                          onChange={(e) => handleUploadVideoFile(e, false)}
+                          disabled={uploadingLessonVideo}
+                          className="hidden"
+                          id="new-lesson-video-file"
+                        />
+                        <label
+                          htmlFor="new-lesson-video-file"
+                          className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
+                        >
+                          {uploadingLessonVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
+                          <span>{uploadingLessonVideo ? `Uploading Video... ${lessonVideoProgress}%` : 'Upload Video File to Cloudinary'}</span>
+                        </label>
+
+                        {/* Upload Progress Bar */}
+                        {uploadingLessonVideo && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] text-amber-400 font-bold">
+                              <span>Uploading...</span>
+                              <span>{lessonVideoProgress}%</span>
+                            </div>
+                            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300"
+                                style={{ width: `${lessonVideoProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Video URL fallback input */}
                       <input
                         type="url"
-                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or MP4 Link"
+                        placeholder="Or enter direct video URL / YouTube link..."
                         value={newLessonVideoUrl}
                         onChange={(e) => setNewLessonVideoUrl(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 outline-none focus:border-amber-400 text-xs font-mono"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
                       />
-                      <p className="text-[10px] text-gray-400">Supports YouTube links, Vimeo links, Google Drive video links, or direct MP4 video URLs.</p>
+
+                      {/* VIDEO PREVIEW PLAYER */}
+                      {newLessonVideoUrl && (
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] uppercase font-bold text-amber-400 block">Uploaded Video Preview</span>
+                          <video
+                            src={newLessonVideoUrl}
+                            controls
+                            poster={newLessonThumbnail}
+                            className="w-full max-h-48 rounded-xl bg-black border border-white/10"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MODULE THUMBNAIL UPLOAD */}
+                    <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
+                      <label className="text-gray-300 font-bold flex items-center gap-1.5">
+                        <FaImage /> Module Thumbnail (Optional)
+                      </label>
+
+                      {newLessonThumbnail ? (
+                        <div className="relative rounded-xl overflow-hidden border border-white/10">
+                          <img src={newLessonThumbnail} alt="Module Thumbnail" className="w-full h-24 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewLessonThumbnail('');
+                              setNewLessonThumbnailPublicId('');
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                          >
+                            <FaTimes size={10} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleUploadModuleThumbnail(e, false)}
+                            disabled={uploadingLessonThumb}
+                            className="hidden"
+                            id="new-module-thumb-file"
+                          />
+                          <label
+                            htmlFor="new-module-thumb-file"
+                            className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-2 flex items-center gap-2 text-gray-300 text-xs font-semibold transition"
+                          >
+                            {uploadingLessonThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt />}
+                            <span>{uploadingLessonThumb ? `Uploading ${lessonThumbProgress}%` : 'Upload Module Thumbnail'}</span>
+                          </label>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -505,8 +900,8 @@ export function AdminDashboard() {
                         <label>Duration (secs)</label>
                         <input
                           type="number"
-                          value={newLessonDuration}
-                          onChange={(e) => setNewLessonDuration(e.target.value)}
+                          value={newLessonVideoDuration}
+                          onChange={(e) => setNewLessonVideoDuration(e.target.value)}
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
                         />
                       </div>
@@ -523,7 +918,11 @@ export function AdminDashboard() {
                       ></textarea>
                     </div>
 
-                    <button type="submit" className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={uploadingLessonVideo || uploadingLessonThumb}
+                      className="w-full bg-finance-gold text-finance-dark py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
                       <FaPlus /> Attach Lesson to Syllabus
                     </button>
                   </form>
@@ -532,40 +931,93 @@ export function AdminDashboard() {
 
             </div>
 
-            {/* Courses Catalog Directory */}
+            {/* Courses & Syllabus Directory with Module Editor */}
             <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">Active Courses Directory</h3>
+              <h3 className="text-base font-bold text-white mb-2">Active Courses & Syllabus Inspector</h3>
               <div className="divide-y divide-white/5">
-                {courses?.map(c => (
-                  <div key={c._id} className="py-4 flex justify-between items-center text-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-white text-base">{c.title}</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.isPublished !== false ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
-                          {c.isPublished !== false ? 'Published' : 'Draft / Unpublished'}
-                        </span>
+                {courses?.map((c) => (
+                  <div key={c._id} className="py-4 space-y-3 text-xs">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        {c.thumbnail && (
+                          <img src={c.thumbnail} alt={c.title} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
+                        )}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-white text-base">{c.title}</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.isPublished !== false ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                              {c.isPublished !== false ? 'Published' : 'Draft / Unpublished'}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 font-mono">
+                            Price: ₹{c.price.toLocaleString('en-IN')} | Category: {c.category} | Sections: {c.sections?.length || 0}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-gray-400 font-mono">
-                        Price: ₹{c.price.toLocaleString('en-IN')} | Category: {c.category} | Sections: {c.sections?.length || 0}
-                      </p>
+
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => togglePublishMutation.mutate({ id: c._id, isPublished: c.isPublished === false })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold border transition ${c.isPublished !== false ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'}`}
+                        >
+                          {c.isPublished !== false ? <><FaEyeSlash /> Unpublish</> : <><FaEye /> Publish</>}
+                        </button>
+
+                        <button 
+                          onClick={() => deleteCourseMutation.mutate(c._id)}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-xl"
+                          title="Delete Course"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => togglePublishMutation.mutate({ id: c._id, isPublished: c.isPublished === false })}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold border transition ${c.isPublished !== false ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'}`}
-                      >
-                        {c.isPublished !== false ? <><FaEyeSlash /> Unpublish</> : <><FaEye /> Publish</>}
-                      </button>
+                    {/* Syllabus Sections & Modules Listing */}
+                    {c.sections?.length > 0 && (
+                      <div className="pl-4 border-l-2 border-finance-gold/20 space-y-2 mt-2">
+                        {c.sections.map((sec) => (
+                          <div key={sec._id} className="p-3 bg-white/[0.01] border border-white/5 rounded-xl space-y-2">
+                            <h5 className="font-bold text-amber-400 text-xs">{sec.title}</h5>
+                            <div className="divide-y divide-white/5">
+                              {sec.lessons?.map((les) => (
+                                <div key={les._id} className="py-2 flex items-center justify-between gap-3 text-gray-300">
+                                  <div className="flex items-center gap-2.5 truncate">
+                                    {les.thumbnail ? (
+                                      <img src={les.thumbnail} alt="" className="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0" />
+                                    ) : (
+                                      <FaVideo className="text-finance-gold shrink-0" />
+                                    )}
+                                    <div className="truncate">
+                                      <span className="font-semibold text-white block truncate">{les.title}</span>
+                                      <span className="text-[10px] text-gray-500 font-mono">
+                                        {Math.round(les.videoDuration / 60)}m | {les.videoFormat || 'mp4'}
+                                      </span>
+                                    </div>
+                                  </div>
 
-                      <button 
-                        onClick={() => deleteCourseMutation.mutate(c._id)}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-xl"
-                        title="Delete Course"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      onClick={() => openEditLessonModal(c._id, sec._id, les)}
+                                      className="flex items-center gap-1 bg-finance-gold/10 hover:bg-finance-gold/20 text-finance-gold border border-finance-gold/20 px-2.5 py-1 rounded-lg font-bold text-[11px] transition"
+                                    >
+                                      <FaEdit /> Edit Module
+                                    </button>
+                                    <button
+                                      onClick={() => deleteLessonMutation.mutate({ courseId: c._id, sectionId: sec._id, lessonId: les._id })}
+                                      className="text-red-400 hover:text-red-300 p-1"
+                                      title="Delete Module Lesson"
+                                    >
+                                      <FaTrash size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -647,7 +1099,7 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
-                    {coupons?.map(c => (
+                    {coupons?.map((c) => (
                       <tr key={c._id}>
                         <td className="py-3 font-bold text-white">{c.couponCode}</td>
                         <td className="py-3">{c.discountValue}{c.discountType === 'Percentage' ? '%' : ' INR'}</td>
@@ -685,7 +1137,7 @@ export function AdminDashboard() {
                   className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none"
                 >
                   <option value="">-- Choose Course Batch --</option>
-                  {courses?.map(c => (
+                  {courses?.map((c) => (
                     <option key={c._id} value={c._id}>{c.title}</option>
                   ))}
                 </select>
@@ -738,7 +1190,7 @@ export function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-gray-300">
-                  {students?.map(s => (
+                  {students?.map((s) => (
                     <tr key={s._id}>
                       <td className="py-3 font-bold text-white">{s.name}</td>
                       <td className="py-3 font-mono">{s.email}</td>
@@ -758,6 +1210,215 @@ export function AdminDashboard() {
         )}
 
       </div>
+
+      {/* EDIT LESSON MODAL */}
+      {editingLesson && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0B132B] border border-white/10 rounded-2xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto space-y-4 text-xs font-semibold text-gray-300">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <FaEdit className="text-finance-gold" /> Edit Module Lesson
+              </h3>
+              <button onClick={() => setEditingLesson(null)} className="text-gray-400 hover:text-white p-1">
+                <FaTimes size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditLesson} className="space-y-4">
+              <div>
+                <label className="block mb-1">Lesson Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Lesson Description</label>
+                <textarea
+                  rows="2"
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none resize-none"
+                ></textarea>
+              </div>
+
+              {/* VIDEO MANAGEMENT & PREVIEW */}
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <FaVideo /> Video File & Cloudinary Stream
+                  </label>
+                  {editVideoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditVideoUrl('');
+                        setEditVideoPublicId('');
+                        setEditVideoDuration(0);
+                        setEditVideoFormat('');
+                        setEditVideoSize(0);
+                      }}
+                      className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
+                    >
+                      Delete Video
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                    onChange={(e) => handleUploadVideoFile(e, true)}
+                    disabled={uploadingEditVideo}
+                    className="hidden"
+                    id="edit-lesson-video-file"
+                  />
+                  <label
+                    htmlFor="edit-lesson-video-file"
+                    className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
+                  >
+                    {uploadingEditVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
+                    <span>{uploadingEditVideo ? `Uploading Replace Video... ${editVideoProgress}%` : 'Replace Video (Upload File)'}</span>
+                  </label>
+
+                  {uploadingEditVideo && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-amber-400 font-bold">
+                        <span>Uploading Video...</span>
+                        <span>{editVideoProgress}%</span>
+                      </div>
+                      <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300"
+                          style={{ width: `${editVideoProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="url"
+                  placeholder="Or paste video URL..."
+                  value={editVideoUrl}
+                  onChange={(e) => setEditVideoUrl(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none font-mono text-xs"
+                />
+
+                {editVideoUrl && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-amber-400 block">Video Preview</span>
+                    <video
+                      src={editVideoUrl}
+                      controls
+                      poster={editThumbnail}
+                      className="w-full max-h-48 rounded-xl bg-black border border-white/10"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* MODULE THUMBNAIL MANAGEMENT */}
+              <div className="p-4 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-gray-300 font-bold flex items-center gap-1.5">
+                    <FaImage /> Module Thumbnail
+                  </label>
+                  {editThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditThumbnail('');
+                        setEditThumbnailPublicId('');
+                      }}
+                      className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
+                    >
+                      Delete Thumbnail
+                    </button>
+                  )}
+                </div>
+
+                {editThumbnail ? (
+                  <div className="relative rounded-xl overflow-hidden border border-white/10">
+                    <img src={editThumbnail} alt="Module Thumbnail" className="w-full h-32 object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleUploadModuleThumbnail(e, true)}
+                      disabled={uploadingEditThumb}
+                      className="hidden"
+                      id="edit-module-thumb-file"
+                    />
+                    <label
+                      htmlFor="edit-module-thumb-file"
+                      className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center gap-2 text-gray-300 text-xs font-semibold transition"
+                    >
+                      {uploadingEditThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt />}
+                      <span>{uploadingEditThumb ? `Uploading ${editThumbProgress}%` : 'Upload / Replace Thumbnail'}</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1">PDF Notes URL</label>
+                  <input
+                    type="url"
+                    value={editPdfUrl}
+                    onChange={(e) => setEditPdfUrl(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Duration (seconds)</label>
+                  <input
+                    type="number"
+                    value={editVideoDuration}
+                    onChange={(e) => setEditVideoDuration(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-1">Assignment Details</label>
+                <textarea
+                  rows="2"
+                  value={editAssignment}
+                  onChange={(e) => setEditAssignment(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none resize-none"
+                ></textarea>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingLesson(null)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadingEditVideo || uploadingEditThumb}
+                  className="px-6 py-2 rounded-xl bg-finance-gold text-finance-dark font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

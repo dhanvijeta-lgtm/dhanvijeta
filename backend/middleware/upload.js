@@ -19,23 +19,32 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter (PDFs and Images)
+// File filter (Images, Videos, PDFs)
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.mp4'];
+  const allowedExtensions = [
+    // Image formats
+    '.png', '.jpg', '.jpeg', '.webp', '.svg',
+    // Video formats
+    '.mp4', '.mov', '.avi', '.mkv', '.webm',
+    // Document formats
+    '.pdf'
+  ];
   const ext = path.extname(file.originalname).toLowerCase();
   
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Unsupported file extension'), false);
+    cb(new Error(`Unsupported file extension: ${ext}. Allowed formats: PNG, JPG, JPEG, WEBP, MP4, MOV, AVI, MKV, WEBM, PDF`), false);
   }
 };
+
+const maxMb = Number(process.env.MAX_FILE_SIZE_MB) || 500;
 
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100 MB limit for course video fallbacks
+    fileSize: maxMb * 1024 * 1024 // 500 MB limit
   }
 });
 

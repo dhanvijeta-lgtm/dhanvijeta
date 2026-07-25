@@ -22,6 +22,22 @@ const lessonSchema = new mongoose.Schema({
     type: Number, // duration in seconds
     default: 0
   },
+  videoSize: {
+    type: Number, // size in bytes
+    default: 0
+  },
+  videoFormat: {
+    type: String, // mp4, mov, avi, mkv, webm, etc.
+    default: ''
+  },
+  thumbnail: {
+    type: String, // Module / Lesson thumbnail URL
+    default: ''
+  },
+  thumbnailPublicId: {
+    type: String, // Cloudinary public_id for module thumbnail
+    default: ''
+  },
   pdfUrl: {
     type: String,
     default: ''
@@ -92,6 +108,10 @@ const courseSchema = new mongoose.Schema(
       default: 5.0
     },
     thumbnail: {
+      type: String,
+      default: ''
+    },
+    thumbnailPublicId: {
       type: String,
       default: ''
     },

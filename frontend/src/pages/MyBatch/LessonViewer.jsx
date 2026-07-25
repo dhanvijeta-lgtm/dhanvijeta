@@ -98,6 +98,7 @@ export function LessonViewer() {
         {activeLesson ? (
           <VideoPlayer 
             src={activeLesson.videoStreamUrl} 
+            poster={activeLesson.thumbnail}
             onEnded={handleLessonEnd}
           />
         ) : (
