@@ -49,6 +49,46 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
   let orderId;
   let receiptId = `rcpt_${userId.toString().slice(-4)}_${courseId.toString().slice(-4)}_${Date.now().toString().slice(-4)}`;
 
+  // Handle Free Courses (price === 0 or 100% discount)
+  if (finalPrice <= 0) {
+    const freeOrderId = `free_order_${crypto.randomBytes(8).toString('hex')}`;
+    
+    // Create captured payment record for free access
+    const payment = await Payment.create({
+      userId,
+      courseId,
+      orderId: freeOrderId,
+      paymentId: `free_enroll_${crypto.randomBytes(6).toString('hex')}`,
+      amount: 0,
+      couponApplied: appliedCoupon ? appliedCoupon.couponCode : null,
+      status: 'captured'
+    });
+
+    // Auto-grant full purchase batch access
+    const purchase = await Purchase.findOneAndUpdate(
+      { userId, courseId },
+      {
+        paymentId: payment._id,
+        paymentStatus: 'completed',
+        purchaseDate: new Date(),
+        $setOnInsert: {
+          progress: { completedLessons: [] },
+          completionPercentage: 0,
+          hoursWatched: 0,
+          certificateIssued: false
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    return {
+      orderId: freeOrderId,
+      amount: 0,
+      isFree: true,
+      purchase
+    };
+  }
+
   if (useMockPayment) {
     // Generate a mock order ID
     orderId = `mock_order_${crypto.randomBytes(8).toString('hex')}`;

@@ -14,6 +14,8 @@ export function CourseCard({ course }) {
     ? Math.round(basePrice - (basePrice * (course.discount / 100)))
     : basePrice;
 
+  const isFree = discountedPrice <= 0 || basePrice === 0;
+
   return (
     <div className="relative group glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300 flex flex-col h-full border border-white/5 shadow-lg">
       
@@ -80,12 +82,22 @@ export function CourseCard({ course }) {
           {/* Pricing Details */}
           <div className="flex items-baseline justify-between border-t border-white/5 pt-4 mt-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-white">₹{discountedPrice.toLocaleString('en-IN')}</span>
-              {course.discount > 0 && (
-                <span className="text-xs text-gray-500 line-through">₹{basePrice.toLocaleString('en-IN')}</span>
+              {isFree ? (
+                <span className="text-xl font-black text-emerald-400 font-mono tracking-wide">FREE</span>
+              ) : (
+                <>
+                  <span className="text-xl font-black text-white">₹{discountedPrice.toLocaleString('en-IN')}</span>
+                  {course.discount > 0 && (
+                    <span className="text-xs text-gray-500 line-through">₹{basePrice.toLocaleString('en-IN')}</span>
+                  )}
+                </>
               )}
             </div>
-            {course.discount > 0 && (
+            {isFree ? (
+              <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                FREE ACCESS
+              </span>
+            ) : course.discount > 0 && (
               <span className="text-[10px] font-bold text-finance-emerald bg-finance-emerald/10 border border-finance-emerald/20 px-2 py-0.5 rounded-md">
                 {course.discount}% OFF
               </span>

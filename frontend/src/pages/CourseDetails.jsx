@@ -54,6 +54,8 @@ export function CourseDetails({ onOpenLogin }) {
     ? activeCoupon.finalPrice 
     : initialDiscountPrice;
 
+  const isFree = currentPrice <= 0 || basePrice === 0;
+
   // Coupon verification
   const handleApplyCoupon = async () => {
     if (!couponInput) return;
@@ -84,6 +86,13 @@ export function CourseDetails({ onOpenLogin }) {
       });
 
       const orderData = checkoutRes.data.data;
+
+      // Handle Free Course instant enrollment
+      if (orderData.isFree) {
+        toast.success('Enrolled in free course successfully! Welcome to your Batch.');
+        navigate(`/my-batch/${course._id}`);
+        return;
+      }
 
       // 2. Handle payment signature verification
       if (orderData.isMock) {
@@ -132,8 +141,9 @@ export function CourseDetails({ onOpenLogin }) {
       }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Checkout order generation failed.');
+    } finally {
+      setCheckoutLoading(false);
     }
-    setCheckoutLoading(false);
   };
 
   return (
@@ -237,15 +247,25 @@ export function CourseDetails({ onOpenLogin }) {
           {/* Card header */}
           <div className="text-center pb-4 border-b border-white/5">
             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black block mb-1">
-              Guaranteed Learning Path
+              {isFree ? 'Free Enrollment Path' : 'Guaranteed Learning Path'}
             </span>
             <div className="flex items-baseline justify-center gap-2">
-              <span className="text-3xl font-black text-white">₹{currentPrice.toLocaleString('en-IN')}</span>
-              {course.discount > 0 && (
-                <span className="text-sm text-gray-500 line-through">₹{basePrice.toLocaleString('en-IN')}</span>
+              {isFree ? (
+                <span className="text-4xl font-black text-emerald-400 font-mono tracking-wider">FREE</span>
+              ) : (
+                <>
+                  <span className="text-3xl font-black text-white">₹{currentPrice.toLocaleString('en-IN')}</span>
+                  {course.discount > 0 && (
+                    <span className="text-sm text-gray-500 line-through">₹{basePrice.toLocaleString('en-IN')}</span>
+                  )}
+                </>
               )}
             </div>
-            {course.discount > 0 && (
+            {isFree ? (
+              <span className="inline-block mt-2 text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
+                100% Free Access
+              </span>
+            ) : course.discount > 0 && (
               <span className="inline-block mt-2 text-[10px] font-bold text-finance-emerald bg-finance-emerald/10 border border-finance-emerald/20 px-2 py-0.5 rounded">
                 Discount Active: {course.discount}% OFF
               </span>
@@ -256,9 +276,13 @@ export function CourseDetails({ onOpenLogin }) {
           <button
             onClick={handleBuyNow}
             disabled={checkoutLoading}
-            className="w-full bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-finance-dark font-extrabold text-center py-4 rounded-xl shadow-gold-glow transition disabled:opacity-50"
+            className={`w-full font-extrabold text-center py-4 rounded-xl transition disabled:opacity-50 ${
+              isFree
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-finance-dark shadow-emerald-glow'
+                : 'bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-finance-dark shadow-gold-glow'
+            }`}
           >
-            {checkoutLoading ? 'Redirecting to checkout...' : 'Enroll / Buy Now'}
+            {checkoutLoading ? (isFree ? 'Enrolling...' : 'Redirecting to checkout...') : (isFree ? 'Enroll for Free' : 'Enroll / Buy Now')}
           </button>
 
           {/* Coupon inputs */}
