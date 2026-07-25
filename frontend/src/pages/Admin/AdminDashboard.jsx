@@ -707,51 +707,68 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* COURSE THUMBNAIL UPLOAD */}
-                  <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
-                    <label className="text-amber-300 font-bold flex items-center gap-1.5">
-                      <FaImage /> Upload Course Thumbnail (Cloudinary)
-                    </label>
-                    
-                    {newCourseThumbnail ? (
-                      <div className="relative rounded-xl overflow-hidden group border border-white/10">
-                        <img src={newCourseThumbnail} alt="Course Thumbnail" className="w-full h-32 object-cover" />
+                  {/* DUAL OPTION COURSE THUMBNAIL (Upload File or Enter URL) */}
+                  <div className="p-3.5 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center">
+                      <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                        <FaImage /> Course Thumbnail (Upload File or Enter URL)
+                      </label>
+                      {newCourseThumbnail && (
                         <button
                           type="button"
                           onClick={() => {
                             setNewCourseThumbnail('');
                             setNewCourseThumbnailPublicId('');
                           }}
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition"
+                          className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
                         >
-                          <FaTimes size={12} />
+                          Clear Thumbnail
                         </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 hover:border-finance-gold/50 transition">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleUploadCourseThumbnail(e, false)}
-                          disabled={uploadingCourseThumb}
-                          className="hidden"
-                          id="course-thumb-file"
-                        />
-                        <label htmlFor="course-thumb-file" className="cursor-pointer flex flex-col items-center gap-1">
-                          {uploadingCourseThumb ? (
-                            <FaSpinner className="animate-spin text-finance-gold text-2xl" />
-                          ) : (
-                            <FaCloudUploadAlt className="text-finance-gold text-2xl" />
-                          )}
-                          <span className="text-gray-300 font-semibold">
-                            {uploadingCourseThumb ? `Uploading... ${courseThumbProgress}%` : 'Click to Upload Course Image'}
-                          </span>
-                        </label>
-                        {uploadingCourseThumb && (
-                          <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
-                            <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${courseThumbProgress}%` }}></div>
-                          </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleUploadCourseThumbnail(e, false)}
+                        disabled={uploadingCourseThumb}
+                        className="hidden"
+                        id="course-thumb-file"
+                      />
+                      <label
+                        htmlFor="course-thumb-file"
+                        className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-gray-300 font-semibold transition"
+                      >
+                        {uploadingCourseThumb ? (
+                          <FaSpinner className="animate-spin text-finance-gold" />
+                        ) : (
+                          <FaCloudUploadAlt className="text-finance-gold text-lg" />
                         )}
+                        <span>{uploadingCourseThumb ? `Uploading Image... ${courseThumbProgress}%` : 'Upload Thumbnail File to Cloudinary'}</span>
+                      </label>
+
+                      {uploadingCourseThumb && (
+                        <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${courseThumbProgress}%` }}></div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400 font-semibold shrink-0">OR PASTE URL:</span>
+                        <input
+                          type="url"
+                          placeholder="https://images.unsplash.com/... or paste image URL"
+                          value={newCourseThumbnail}
+                          onChange={(e) => setNewCourseThumbnail(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white outline-none text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {newCourseThumbnail && (
+                      <div className="relative rounded-xl overflow-hidden border border-white/10 mt-2">
+                        <img src={newCourseThumbnail} alt="Course Thumbnail Preview" className="w-full h-32 object-cover" />
                       </div>
                     )}
                   </div>
@@ -917,43 +934,64 @@ export function AdminDashboard() {
                       )}
                     </div>
 
-                    {/* MODULE THUMBNAIL UPLOAD */}
-                    <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
-                      <label className="text-gray-300 font-bold flex items-center gap-1.5">
-                        <FaImage /> Module Thumbnail (Optional)
-                      </label>
-
-                      {newLessonThumbnail ? (
-                        <div className="relative rounded-xl overflow-hidden border border-white/10">
-                          <img src={newLessonThumbnail} alt="Module Thumbnail" className="w-full h-24 object-cover" />
+                    {/* DUAL OPTION MODULE THUMBNAIL (Upload File or Enter URL) */}
+                    <div className="p-3.5 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-gray-300 font-bold flex items-center gap-1.5">
+                          <FaImage /> Module Thumbnail (Upload File or Enter URL)
+                        </label>
+                        {newLessonThumbnail && (
                           <button
                             type="button"
                             onClick={() => {
                               setNewLessonThumbnail('');
                               setNewLessonThumbnailPublicId('');
                             }}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                            className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
                           >
-                            <FaTimes size={10} />
+                            Clear Thumbnail
                           </button>
-                        </div>
-                      ) : (
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleUploadModuleThumbnail(e, false)}
+                          disabled={uploadingLessonThumb}
+                          className="hidden"
+                          id="new-module-thumb-file"
+                        />
+                        <label
+                          htmlFor="new-module-thumb-file"
+                          className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-gray-300 text-xs font-semibold transition"
+                        >
+                          {uploadingLessonThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt className="text-finance-gold" />}
+                          <span>{uploadingLessonThumb ? `Uploading ${lessonThumbProgress}%` : 'Upload Module Thumbnail File'}</span>
+                        </label>
+
+                        {uploadingLessonThumb && (
+                          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${lessonThumbProgress}%` }}></div>
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-400 font-semibold shrink-0">OR PASTE URL:</span>
                           <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleUploadModuleThumbnail(e, false)}
-                            disabled={uploadingLessonThumb}
-                            className="hidden"
-                            id="new-module-thumb-file"
+                            type="url"
+                            placeholder="https://images.unsplash.com/... or paste image URL"
+                            value={newLessonThumbnail}
+                            onChange={(e) => setNewLessonThumbnail(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white outline-none text-xs font-mono"
                           />
-                          <label
-                            htmlFor="new-module-thumb-file"
-                            className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-2 flex items-center gap-2 text-gray-300 text-xs font-semibold transition"
-                          >
-                            {uploadingLessonThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt />}
-                            <span>{uploadingLessonThumb ? `Uploading ${lessonThumbProgress}%` : 'Upload Module Thumbnail'}</span>
-                          </label>
+                        </div>
+                      </div>
+
+                      {newLessonThumbnail && (
+                        <div className="relative rounded-xl overflow-hidden border border-white/10 mt-2">
+                          <img src={newLessonThumbnail} alt="Module Thumbnail Preview" className="w-full h-28 object-cover" />
                         </div>
                       )}
                     </div>
@@ -1379,11 +1417,11 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              {/* EDIT COURSE THUMBNAIL UPLOAD */}
-              <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
+              {/* DUAL OPTION EDIT COURSE THUMBNAIL (Upload File or Enter URL) */}
+              <div className="p-3.5 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-amber-300 font-bold flex items-center gap-1.5">
-                    <FaImage /> Course Thumbnail Image
+                    <FaImage /> Course Thumbnail (Upload File or Enter URL)
                   </label>
                   {editCourseThumbnail && (
                     <button
@@ -1399,35 +1437,48 @@ export function AdminDashboard() {
                   )}
                 </div>
 
-                {editCourseThumbnail ? (
-                  <div className="relative rounded-xl overflow-hidden border border-white/10">
-                    <img src={editCourseThumbnail} alt="Course Thumbnail" className="w-full h-36 object-cover" />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 hover:border-finance-gold/50 transition">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleUploadCourseThumbnail(e, true)}
-                      disabled={uploadingEditCourseThumb}
-                      className="hidden"
-                      id="edit-course-thumb-file"
-                    />
-                    <label htmlFor="edit-course-thumb-file" className="cursor-pointer flex flex-col items-center gap-1">
-                      {uploadingEditCourseThumb ? (
-                        <FaSpinner className="animate-spin text-finance-gold text-2xl" />
-                      ) : (
-                        <FaCloudUploadAlt className="text-finance-gold text-2xl" />
-                      )}
-                      <span className="text-gray-300 font-semibold">
-                        {uploadingEditCourseThumb ? `Uploading... ${editCourseThumbProgress}%` : 'Upload / Replace Course Thumbnail'}
-                      </span>
-                    </label>
-                    {uploadingEditCourseThumb && (
-                      <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${editCourseThumbProgress}%` }}></div>
-                      </div>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadCourseThumbnail(e, true)}
+                    disabled={uploadingEditCourseThumb}
+                    className="hidden"
+                    id="edit-course-thumb-file"
+                  />
+                  <label
+                    htmlFor="edit-course-thumb-file"
+                    className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-gray-300 font-semibold transition"
+                  >
+                    {uploadingEditCourseThumb ? (
+                      <FaSpinner className="animate-spin text-finance-gold" />
+                    ) : (
+                      <FaCloudUploadAlt className="text-finance-gold text-lg" />
                     )}
+                    <span>{uploadingEditCourseThumb ? `Uploading Image... ${editCourseThumbProgress}%` : 'Upload / Replace Thumbnail File'}</span>
+                  </label>
+
+                  {uploadingEditCourseThumb && (
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${editCourseThumbProgress}%` }}></div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-400 font-semibold shrink-0">OR PASTE URL:</span>
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/... or paste image URL"
+                      value={editCourseThumbnail}
+                      onChange={(e) => setEditCourseThumbnail(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white outline-none text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                {editCourseThumbnail && (
+                  <div className="relative rounded-xl overflow-hidden border border-white/10 mt-2">
+                    <img src={editCourseThumbnail} alt="Course Thumbnail Preview" className="w-full h-36 object-cover" />
                   </div>
                 )}
               </div>
@@ -1576,11 +1627,11 @@ export function AdminDashboard() {
                 )}
               </div>
 
-              {/* MODULE THUMBNAIL MANAGEMENT */}
-              <div className="p-4 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
+              {/* DUAL OPTION EDIT MODULE THUMBNAIL (Upload File or Enter URL) */}
+              <div className="p-3.5 bg-white/[0.02] border border-white/10 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-gray-300 font-bold flex items-center gap-1.5">
-                    <FaImage /> Module Thumbnail
+                    <FaImage /> Module Thumbnail (Upload File or Enter URL)
                   </label>
                   {editThumbnail && (
                     <button
@@ -1596,27 +1647,44 @@ export function AdminDashboard() {
                   )}
                 </div>
 
-                {editThumbnail ? (
-                  <div className="relative rounded-xl overflow-hidden border border-white/10">
-                    <img src={editThumbnail} alt="Module Thumbnail" className="w-full h-32 object-cover" />
-                  </div>
-                ) : (
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadModuleThumbnail(e, true)}
+                    disabled={uploadingEditThumb}
+                    className="hidden"
+                    id="edit-module-thumb-file"
+                  />
+                  <label
+                    htmlFor="edit-module-thumb-file"
+                    className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-gray-300 text-xs font-semibold transition"
+                  >
+                    {uploadingEditThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt className="text-finance-gold" />}
+                    <span>{uploadingEditThumb ? `Uploading ${editThumbProgress}%` : 'Upload / Replace Thumbnail File'}</span>
+                  </label>
+
+                  {uploadingEditThumb && (
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${editThumbProgress}%` }}></div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-400 font-semibold shrink-0">OR PASTE URL:</span>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleUploadModuleThumbnail(e, true)}
-                      disabled={uploadingEditThumb}
-                      className="hidden"
-                      id="edit-module-thumb-file"
+                      type="url"
+                      placeholder="https://images.unsplash.com/... or paste image URL"
+                      value={editThumbnail}
+                      onChange={(e) => setEditThumbnail(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white outline-none text-xs font-mono"
                     />
-                    <label
-                      htmlFor="edit-module-thumb-file"
-                      className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center gap-2 text-gray-300 text-xs font-semibold transition"
-                    >
-                      {uploadingEditThumb ? <FaSpinner className="animate-spin text-finance-gold" /> : <FaCloudUploadAlt />}
-                      <span>{uploadingEditThumb ? `Uploading ${editThumbProgress}%` : 'Upload / Replace Thumbnail'}</span>
-                    </label>
+                  </div>
+                </div>
+
+                {editThumbnail && (
+                  <div className="relative rounded-xl overflow-hidden border border-white/10 mt-2">
+                    <img src={editThumbnail} alt="Module Thumbnail Preview" className="w-full h-32 object-cover" />
                   </div>
                 )}
               </div>
