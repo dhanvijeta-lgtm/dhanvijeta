@@ -20,7 +20,8 @@ import {
   FaImage,
   FaSpinner,
   FaPlayCircle,
-  FaTimes
+  FaTimes,
+  FaLayerGroup
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -37,6 +38,20 @@ export function AdminDashboard() {
   const [newCourseThumbnailPublicId, setNewCourseThumbnailPublicId] = useState('');
   const [uploadingCourseThumb, setUploadingCourseThumb] = useState(false);
   const [courseThumbProgress, setCourseThumbProgress] = useState(0);
+
+  // Course Edit State
+  const [editingCourse, setEditingCourse] = useState(null); // course object
+  const [editCourseTitle, setEditCourseTitle] = useState('');
+  const [editCoursePrice, setEditCoursePrice] = useState('');
+  const [editCourseDiscount, setEditCourseDiscount] = useState(0);
+  const [editCourseCategory, setEditCourseCategory] = useState('Beginner');
+  const [editCourseInstructor, setEditCourseInstructor] = useState('Dhan Vijeta Team');
+  const [editCourseDuration, setEditCourseDuration] = useState('0 hours');
+  const [editCourseDesc, setEditCourseDesc] = useState('');
+  const [editCourseThumbnail, setEditCourseThumbnail] = useState('');
+  const [editCourseThumbnailPublicId, setEditCourseThumbnailPublicId] = useState('');
+  const [uploadingEditCourseThumb, setUploadingEditCourseThumb] = useState(false);
+  const [editCourseThumbProgress, setEditCourseThumbProgress] = useState(0);
 
   // Coupon Creation State
   const [newCouponCode, setNewCouponCode] = useState('');
@@ -128,31 +143,44 @@ export function AdminDashboard() {
   });
 
   // UPLOAD HANDLERS
-  const handleUploadCourseThumbnail = async (e) => {
+  const handleUploadCourseThumbnail = async (e, isEdit = false) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const formData = new FormData();
     formData.append('image', file);
 
-    setUploadingCourseThumb(true);
-    setCourseThumbProgress(0);
+    if (isEdit) {
+      setUploadingEditCourseThumb(true);
+      setEditCourseThumbProgress(0);
+    } else {
+      setUploadingCourseThumb(true);
+      setCourseThumbProgress(0);
+    }
 
     try {
       const res = await client.post('/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (evt) => {
           const percent = Math.round((evt.loaded * 100) / evt.total);
-          setCourseThumbProgress(percent);
+          if (isEdit) setEditCourseThumbProgress(percent);
+          else setCourseThumbProgress(percent);
         }
       });
-      setNewCourseThumbnail(res.data.data.url);
-      setNewCourseThumbnailPublicId(res.data.data.public_id);
+
+      if (isEdit) {
+        setEditCourseThumbnail(res.data.data.url);
+        setEditCourseThumbnailPublicId(res.data.data.public_id);
+      } else {
+        setNewCourseThumbnail(res.data.data.url);
+        setNewCourseThumbnailPublicId(res.data.data.public_id);
+      }
       toast.success('Course thumbnail uploaded to Cloudinary!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Course thumbnail upload failed');
     } finally {
-      setUploadingCourseThumb(false);
+      if (isEdit) setUploadingEditCourseThumb(false);
+      else setUploadingCourseThumb(false);
     }
   };
 
@@ -263,6 +291,18 @@ export function AdminDashboard() {
       setNewCourseDesc('');
       setNewCourseThumbnail('');
       setNewCourseThumbnailPublicId('');
+    }
+  });
+
+  const updateCourseMutation = useMutation({
+    mutationFn: async ({ id, payload }) => {
+      await client.put(`/courses/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success('Course details updated successfully!');
+      setEditingCourse(null);
     }
   });
 
@@ -388,6 +428,39 @@ export function AdminDashboard() {
       thumbnail: newCourseThumbnail,
       thumbnailPublicId: newCourseThumbnailPublicId,
       isPublished: true
+    });
+  };
+
+  const openEditCourseModal = (course) => {
+    setEditingCourse(course);
+    setEditCourseTitle(course.title || '');
+    setEditCoursePrice(course.price !== undefined ? course.price : '');
+    setEditCourseDiscount(course.discount || 0);
+    setEditCourseCategory(course.category || 'Beginner');
+    setEditCourseInstructor(course.instructor || 'Dhan Vijeta Team');
+    setEditCourseDuration(course.duration || '0 hours');
+    setEditCourseDesc(course.description || '');
+    setEditCourseThumbnail(course.thumbnail || '');
+    setEditCourseThumbnailPublicId(course.thumbnailPublicId || '');
+  };
+
+  const handleSaveEditCourse = (e) => {
+    e.preventDefault();
+    if (!editingCourse || !editCourseTitle || editCoursePrice === '') return;
+
+    updateCourseMutation.mutate({
+      id: editingCourse._id,
+      payload: {
+        title: editCourseTitle,
+        price: Number(editCoursePrice),
+        discount: Number(editCourseDiscount) || 0,
+        category: editCourseCategory,
+        instructor: editCourseInstructor,
+        duration: editCourseDuration,
+        description: editCourseDesc,
+        thumbnail: editCourseThumbnail,
+        thumbnailPublicId: editCourseThumbnailPublicId
+      }
     });
   };
 
@@ -659,7 +732,7 @@ export function AdminDashboard() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={handleUploadCourseThumbnail}
+                          onChange={(e) => handleUploadCourseThumbnail(e, false)}
                           disabled={uploadingCourseThumb}
                           className="hidden"
                           id="course-thumb-file"
@@ -931,7 +1004,7 @@ export function AdminDashboard() {
 
             </div>
 
-            {/* Courses & Syllabus Directory with Module Editor */}
+            {/* Courses & Syllabus Directory with Course & Module Editor */}
             <div className="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
               <h3 className="text-base font-bold text-white mb-2">Active Courses & Syllabus Inspector</h3>
               <div className="divide-y divide-white/5">
@@ -939,8 +1012,12 @@ export function AdminDashboard() {
                   <div key={c._id} className="py-4 space-y-3 text-xs">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        {c.thumbnail && (
-                          <img src={c.thumbnail} alt={c.title} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
+                        {c.thumbnail ? (
+                          <img src={c.thumbnail} alt={c.title} className="w-14 h-14 rounded-xl object-cover border border-white/10 shrink-0" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 shrink-0">
+                            <FaBook size={20} />
+                          </div>
                         )}
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
@@ -950,12 +1027,21 @@ export function AdminDashboard() {
                             </span>
                           </div>
                           <p className="text-gray-400 font-mono">
-                            Price: ₹{c.price.toLocaleString('en-IN')} | Category: {c.category} | Sections: {c.sections?.length || 0}
+                            Price: <span className="font-bold text-amber-400">₹{c.price?.toLocaleString('en-IN')}</span> {c.discount > 0 && <span className="text-emerald-400 text-[10px]">({c.discount}% OFF)</span>} | Category: {c.category} | Instructor: {c.instructor}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {/* EDIT COURSE BUTTON */}
+                        <button
+                          onClick={() => openEditCourseModal(c)}
+                          className="flex items-center gap-1.5 bg-finance-gold/10 hover:bg-finance-gold/20 text-finance-gold border border-finance-gold/20 px-3 py-1.5 rounded-xl font-bold text-xs transition"
+                          title="Edit Course Details & Thumbnail"
+                        >
+                          <FaEdit /> Edit Course
+                        </button>
+
                         <button
                           onClick={() => togglePublishMutation.mutate({ id: c._id, isPublished: c.isPublished === false })}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold border transition ${c.isPublished !== false ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'}`}
@@ -1210,6 +1296,173 @@ export function AdminDashboard() {
         )}
 
       </div>
+
+      {/* EDIT COURSE MODAL */}
+      {editingCourse && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0B132B] border border-white/10 rounded-2xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto space-y-4 text-xs font-semibold text-gray-300">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <FaEdit className="text-finance-gold" /> Edit Course Details & Thumbnail
+              </h3>
+              <button onClick={() => setEditingCourse(null)} className="text-gray-400 hover:text-white p-1">
+                <FaTimes size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCourse} className="space-y-4">
+              <div>
+                <label className="block mb-1">Course Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editCourseTitle}
+                  onChange={(e) => setEditCourseTitle(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block mb-1">Price (INR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={editCoursePrice}
+                    onChange={(e) => setEditCoursePrice(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Discount (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editCourseDiscount}
+                    onChange={(e) => setEditCourseDiscount(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Category</label>
+                  <select
+                    value={editCourseCategory}
+                    onChange={(e) => setEditCourseCategory(e.target.value)}
+                    className="w-full bg-[#0B132B] border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                  >
+                    {['Beginner', 'Swing Trading', 'Intraday', 'Options Trading', 'Futures', 'Mutual Funds', 'Technical Analysis', 'Price Action', 'Psychology', 'Portfolio Building'].map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1">Instructor Name</label>
+                  <input
+                    type="text"
+                    value={editCourseInstructor}
+                    onChange={(e) => setEditCourseInstructor(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Duration (e.g. 12 hours)</label>
+                  <input
+                    type="text"
+                    value={editCourseDuration}
+                    onChange={(e) => setEditCourseDuration(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* EDIT COURSE THUMBNAIL UPLOAD */}
+              <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <FaImage /> Course Thumbnail Image
+                  </label>
+                  {editCourseThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditCourseThumbnail('');
+                        setEditCourseThumbnailPublicId('');
+                      }}
+                      className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
+                    >
+                      Delete Thumbnail
+                    </button>
+                  )}
+                </div>
+
+                {editCourseThumbnail ? (
+                  <div className="relative rounded-xl overflow-hidden border border-white/10">
+                    <img src={editCourseThumbnail} alt="Course Thumbnail" className="w-full h-36 object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 hover:border-finance-gold/50 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleUploadCourseThumbnail(e, true)}
+                      disabled={uploadingEditCourseThumb}
+                      className="hidden"
+                      id="edit-course-thumb-file"
+                    />
+                    <label htmlFor="edit-course-thumb-file" className="cursor-pointer flex flex-col items-center gap-1">
+                      {uploadingEditCourseThumb ? (
+                        <FaSpinner className="animate-spin text-finance-gold text-2xl" />
+                      ) : (
+                        <FaCloudUploadAlt className="text-finance-gold text-2xl" />
+                      )}
+                      <span className="text-gray-300 font-semibold">
+                        {uploadingEditCourseThumb ? `Uploading... ${editCourseThumbProgress}%` : 'Upload / Replace Course Thumbnail'}
+                      </span>
+                    </label>
+                    {uploadingEditCourseThumb && (
+                      <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div className="bg-finance-gold h-full transition-all duration-300" style={{ width: `${editCourseThumbProgress}%` }}></div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block mb-1">Course Overview Description</label>
+                <textarea
+                  rows="3"
+                  required
+                  value={editCourseDesc}
+                  onChange={(e) => setEditCourseDesc(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-finance-gold resize-none"
+                ></textarea>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCourse(null)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadingEditCourseThumb}
+                  className="px-6 py-2 rounded-xl bg-finance-gold text-finance-dark font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+                >
+                  Save Course Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* EDIT LESSON MODAL */}
       {editingLesson && (

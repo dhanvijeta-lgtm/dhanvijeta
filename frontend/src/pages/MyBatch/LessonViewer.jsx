@@ -90,14 +90,14 @@ export function LessonViewer() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      
+
       {/* LEFT COLUMN: PLAYER & RESOURCES */}
       <div className="lg:col-span-2 space-y-6">
-        
+
         {/* Video Player */}
         {activeLesson ? (
-          <VideoPlayer 
-            src={activeLesson.videoStreamUrl} 
+          <VideoPlayer
+            src={activeLesson.videoStreamUrl}
             poster={activeLesson.thumbnail}
             onEnded={handleLessonEnd}
           />
@@ -129,11 +129,10 @@ export function LessonViewer() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold transition border-b-2 whitespace-nowrap ${
-                activeTab === tab.id
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold transition border-b-2 whitespace-nowrap ${activeTab === tab.id
                   ? 'text-finance-gold border-finance-gold'
                   : 'text-gray-400 border-transparent hover:text-white'
-              }`}
+                }`}
             >
               {tab.icon}
               <span>{tab.label}</span>
@@ -143,7 +142,7 @@ export function LessonViewer() {
 
         {/* RESOURCE DETAILS VIEW */}
         <div className="glass-card rounded-2xl p-6 border border-white/5 min-h-[150px]">
-          
+
           {/* NOTES */}
           {activeTab === 'notes' && (
             <div>
@@ -156,7 +155,7 @@ export function LessonViewer() {
                       <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">PDF File Document</p>
                     </div>
                   </div>
-                  <a 
+                  <a
                     href={activeLesson.pdfUrl}
                     target="_blank"
                     rel="noreferrer"
@@ -180,7 +179,7 @@ export function LessonViewer() {
                     <h4 className="text-sm font-bold text-white">Task Details</h4>
                     <p className="text-xs text-gray-400 leading-relaxed">{activeLesson.assignment}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => alert('Mock assignment submission successful!')}
                     className="bg-finance-navy border border-white/10 hover:border-finance-gold text-white text-xs font-bold px-4 py-2.5 rounded-xl transition"
                   >
@@ -220,7 +219,7 @@ export function LessonViewer() {
 
       {/* RIGHT COLUMN: SYLLABUS LISTING */}
       <div className="lg:col-span-1 space-y-6">
-        
+
         {/* Progress Metrics Panel */}
         <div className="glass-card rounded-2xl p-5 border border-white/5 space-y-4">
           <div className="flex justify-between items-center text-xs font-bold text-gray-400">
@@ -228,14 +227,14 @@ export function LessonViewer() {
             <span className="text-finance-gold">{purchase.completionPercentage}%</span>
           </div>
           <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-            <div 
+            <div
               className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full"
               style={{ width: `${purchase.completionPercentage}%` }}
             ></div>
           </div>
 
           {purchase.completionPercentage === 100 && (
-            <a 
+            <a
               href={`/api/certificates/verify/DV-${course._id.toString().slice(-4).toUpperCase()}`}
               target="_blank"
               rel="noreferrer"
@@ -268,7 +267,7 @@ export function LessonViewer() {
                       const isActive = activeLesson?._id === lesson._id;
 
                       return (
-                        <div 
+                        <div
                           key={lesson._id}
                           onClick={() => setActiveLesson(lesson)}
                           className={`p-3.5 pl-5 flex items-center justify-between gap-4 cursor-pointer hover:bg-white/[0.02] transition ${isActive ? 'bg-finance-gold/5' : ''}`}
