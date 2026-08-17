@@ -101,7 +101,7 @@ client.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
-        
+
         // Refresh token failed -> clear credentials and trigger redirect to login
         localStorage.removeItem('accessToken');
         window.dispatchEvent(new Event('auth-logout'));

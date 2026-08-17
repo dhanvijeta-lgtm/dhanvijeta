@@ -34,18 +34,31 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-const allowedOrigins = [
+const defaultOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://dhanvijeta.vercel.app',
-  'https://dhanvijeta-1.onrender.com',
-  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
+  'https://dhanvijeta.in',
+  'https://www.dhanvijeta.in',
+  'https://dhanvijeta-1.onrender.com'
+];
+
+const parseEnvOrigins = (envVar) => {
+  if (!envVar) return [];
+  return envVar.split(',').map(o => o.trim().replace(/\/$/, '')).filter(Boolean);
+};
+
+const allowedOrigins = [
+  ...defaultOrigins,
+  ...parseEnvOrigins(process.env.CLIENT_URL),
+  ...parseEnvOrigins(process.env.ALLOWED_ORIGINS)
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+      const cleanOrigin = origin ? origin.replace(/\/$/, '') : null;
+      if (!cleanOrigin || allowedOrigins.includes(cleanOrigin)) {
         callback(null, true);
       } else {
         console.warn(`[CORS Debug] Blocked request from origin: ${origin}`);

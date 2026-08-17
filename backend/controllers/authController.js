@@ -6,7 +6,8 @@ const emailService = require('../services/emailService');
 const response = require('../helpers/response');
 
 const getCookieOptions = () => {
-  const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.CLIENT_URL && !process.env.CLIENT_URL.includes('localhost'));
+  const isProduction = process.env.NODE_ENV === 'production' || 
+    Boolean(process.env.CLIENT_URL && !process.env.CLIENT_URL.includes('localhost'));
   return {
     httpOnly: true,
     secure: isProduction,
@@ -343,9 +344,10 @@ const googleAuth = async (req, res, next) => {
 };
 
 const googleCallback = async (req, res, next) => {
+  const defaultClientUrl = process.env.NODE_ENV === 'production' ? 'https://www.dhanvijeta.in' : 'http://localhost:5173';
+  const clientUrl = (process.env.CLIENT_URL || defaultClientUrl).replace(/\/$/, '');
   try {
     const { code, error } = req.query;
-    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
 
     if (error) {
       console.error('[Google Auth Debug] OAuth Callback error from Google:', error);
@@ -366,7 +368,6 @@ const googleCallback = async (req, res, next) => {
     return res.redirect(`${clientUrl}?token=${token}`);
   } catch (error) {
     console.error('[Google Auth Debug] OAuth Callback exception:', error.message);
-    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
     return res.redirect(`${clientUrl}?error=${encodeURIComponent(error.message)}`);
   }
 };
