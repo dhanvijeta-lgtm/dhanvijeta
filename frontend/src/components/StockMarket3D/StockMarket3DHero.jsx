@@ -20,7 +20,6 @@ export function StockMarket3DHero({ fallbackHero }) {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Update live IST time every second
     const updateTime = () => {
       const now = new Date();
       const istTime = now.toLocaleTimeString('en-US', {
@@ -41,8 +40,8 @@ export function StockMarket3DHero({ fallbackHero }) {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (window.innerWidth < 768) return;
-      const x = (e.clientX / window.innerWidth - 0.5) * 16;
-      const y = (e.clientY / window.innerHeight - 0.5) * 16;
+      const x = (e.clientX / window.innerWidth - 0.5) * 18;
+      const y = (e.clientY / window.innerHeight - 0.5) * 18;
       setMouseOffset({ x, y });
     };
 
@@ -82,7 +81,8 @@ export function StockMarket3DHero({ fallbackHero }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full h-[320vh] bg-transparent select-none">
+    /* Full Viewport Width Breakout: w-screen relative left-[50%] right-[50%] -mx-[50vw] */
+    <div ref={containerRef} className="relative w-screen left-[50%] right-[50%] -mx-[50vw] h-[320vh] bg-transparent select-none">
       {/* Sticky Viewport Container Pinned by GSAP ScrollTrigger */}
       <div ref={stickyRef} className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         
@@ -94,8 +94,8 @@ export function StockMarket3DHero({ fallbackHero }) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(4,8,20,0.85)_100%)] pointer-events-none z-0" />
 
         {/* TOP STATUS BAR: Live IST Clock Pill & Editorial Phase Indicator */}
-        <div className="relative z-20 pt-6 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
-          {/* Status Pill matching attached image */}
+        <div className="relative z-20 pt-6 px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full flex items-center justify-between pointer-events-none">
+          {/* Status Pill */}
           <div className="flex items-center gap-3 bg-[#090d16]/80 border border-white/10 px-4 py-2 rounded-full text-xs font-mono backdrop-blur-md shadow-2xl pointer-events-auto">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -129,7 +129,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           }}
         >
           {/* TOP RIGHT CARD 1: NIFTY 50 */}
-          <div className={`absolute top-[14%] right-[22%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 2 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div className={`absolute top-[14%] right-[18%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 2 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
             <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
               <span className="flex items-center gap-1.5"><FaChartLine className="text-emerald-400" /> NIFTY 50</span>
             </div>
@@ -137,14 +137,13 @@ export function StockMarket3DHero({ fallbackHero }) {
               <span className="text-lg font-bold text-white tracking-tight">24,320.15</span>
               <span className="text-xs font-semibold text-emerald-400">+1.24%</span>
             </div>
-            {/* Sparkline Curve */}
             <svg className="w-full h-6 mt-1" viewBox="0 0 100 25">
               <path d="M0 20 Q 25 5, 50 15 T 100 2" fill="none" stroke="#10b981" strokeWidth="2" />
             </svg>
           </div>
 
           {/* TOP RIGHT CARD 2: BANK NIFTY */}
-          <div className={`absolute top-[14%] right-[5%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 3 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div className={`absolute top-[14%] right-[3%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 3 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
             <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
               <span className="flex items-center gap-1.5"><FaChartBar className="text-emerald-400" /> BANK NIFTY</span>
             </div>
@@ -152,14 +151,13 @@ export function StockMarket3DHero({ fallbackHero }) {
               <span className="text-lg font-bold text-white tracking-tight">52,140.80</span>
               <span className="text-xs font-semibold text-emerald-400">+0.87%</span>
             </div>
-            {/* Sparkline Curve */}
             <svg className="w-full h-6 mt-1" viewBox="0 0 100 25">
               <path d="M0 18 Q 30 22, 60 8 T 100 3" fill="none" stroke="#10b981" strokeWidth="2" />
             </svg>
           </div>
 
           {/* TOP RIGHT CARD 3: MARKET SENTIMENT */}
-          <div className={`absolute top-[34%] right-[7%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-56 ${activePhase >= 2 && activePhase <= 4 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div className={`absolute top-[34%] right-[4%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-56 ${activePhase >= 2 && activePhase <= 4 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
             <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block mb-1">MARKET SENTIMENT</span>
             <div className="flex items-center gap-2">
               <span className="text-xl">🐂</span>
@@ -171,7 +169,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 1: VOLUME */}
-          <div className={`absolute bottom-[10%] left-[6%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[3%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400">
                 <FaChartBar size={16} />
@@ -185,7 +183,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 2: 52W HIGH */}
-          <div className={`absolute bottom-[10%] left-[21%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[17%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
                 <FaClock size={16} />
@@ -199,7 +197,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 3: ADVANCES / MARKET DEPTH */}
-          <div className={`absolute bottom-[10%] left-[36%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[31%] bg-[#090d16]/80 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-sky-500/10 rounded-xl border border-sky-500/20 text-sky-400">
                 <FaChartPie size={16} />
@@ -213,12 +211,12 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
         </div>
 
-        {/* CENTER CONTENT STORYTELLING OVERLAYS (Matching attached image layout) */}
-        <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 max-w-7xl mx-auto w-full">
+        {/* CENTER CONTENT STORYTELLING OVERLAYS */}
+        <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full">
           
           {/* PHASE 1: MASTER THE MARKET */}
           <div
-            className={`w-full max-w-xl text-left transition-all duration-700 space-y-6 transform ${
+            className={`w-full max-w-2xl text-left transition-all duration-700 space-y-6 transform ${
               activePhase === 1
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 translate-y-8 pointer-events-none absolute'
@@ -257,7 +255,7 @@ export function StockMarket3DHero({ fallbackHero }) {
 
           {/* PHASE 2: READ PRICE ACTION */}
           <div
-            className={`w-full max-w-xl text-left transition-all duration-700 space-y-6 transform ${
+            className={`w-full max-w-2xl text-left transition-all duration-700 space-y-6 transform ${
               activePhase === 2
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 translate-y-8 pointer-events-none absolute'
@@ -278,7 +276,7 @@ export function StockMarket3DHero({ fallbackHero }) {
 
           {/* PHASE 3: ANALYZE THE SIGNALS */}
           <div
-            className={`w-full max-w-xl text-left transition-all duration-700 space-y-6 transform ${
+            className={`w-full max-w-2xl text-left transition-all duration-700 space-y-6 transform ${
               activePhase === 3
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 translate-y-8 pointer-events-none absolute'
@@ -299,7 +297,7 @@ export function StockMarket3DHero({ fallbackHero }) {
 
           {/* PHASE 4: TRADE WITH CONFIDENCE */}
           <div
-            className={`w-full max-w-xl text-left transition-all duration-700 space-y-6 transform ${
+            className={`w-full max-w-2xl text-left transition-all duration-700 space-y-6 transform ${
               activePhase === 4
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 translate-y-8 pointer-events-none absolute'
@@ -320,7 +318,7 @@ export function StockMarket3DHero({ fallbackHero }) {
 
           {/* PHASE 5: READY TO MASTER THE MARKET */}
           <div
-            className={`w-full max-w-xl text-left transition-all duration-700 space-y-6 transform ${
+            className={`w-full max-w-2xl text-left transition-all duration-700 space-y-6 transform ${
               activePhase === 5
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 translate-y-8 pointer-events-none absolute'
@@ -360,7 +358,7 @@ export function StockMarket3DHero({ fallbackHero }) {
         </div>
 
         {/* BOTTOM MINIMAL PROGRESS BAR */}
-        <div className="relative z-20 pb-6 px-6 sm:px-12 max-w-7xl mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
+        <div className="relative z-20 pb-6 px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
           <span>SCROLL TO EXPLORE</span>
           <div className="flex items-center gap-1.5">
             <span className="text-amber-400 font-semibold">0{activePhase}</span>

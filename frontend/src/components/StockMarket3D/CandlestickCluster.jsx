@@ -1,28 +1,27 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
-// 34-Candle dataset forming the exact steep rising trajectory matching the user image
+// 34-Candle dataset forming a wide steep rising trajectory spanning full edge-to-edge
 const getStockChartDataset = (isMobile = false) => {
   const count = isMobile ? 18 : 34;
-  const spacingX = isMobile ? 0.9 : 0.68;
+  const spacingX = isMobile ? 1.0 : 0.88; // Wider candlestick spacing across widescreen
   const candles = [];
 
-  // Steep market price curve points matching attached image
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1);
     
     // Wave profile: starts low at left, slight dip, then steep exponential climb to top right
-    let yBase = -2.8 + Math.pow(t, 1.8) * 7.2;
+    let yBase = -3.2 + Math.pow(t, 1.7) * 7.8;
     if (i < 6) {
-      yBase = -2.5 + (i * 0.05) - (Math.sin(i * 0.8) * 0.25); // Left dip
+      yBase = -2.8 + (i * 0.05) - (Math.sin(i * 0.8) * 0.25);
     }
 
     const isGreen = (i % 5 !== 1) && (i % 7 !== 2);
-    const bodyHeight = (Math.sin(i * 0.7) * 0.25 + 0.55);
+    const bodyHeight = (Math.sin(i * 0.7) * 0.25 + 0.6);
     const bodyCenterY = yBase;
 
-    const upperWickHeight = 0.25 + Math.random() * 0.35;
-    const lowerWickHeight = 0.25 + Math.random() * 0.35;
+    const upperWickHeight = 0.28 + Math.random() * 0.35;
+    const lowerWickHeight = 0.28 + Math.random() * 0.35;
 
     const upperWickCenterY = bodyCenterY + bodyHeight / 2 + upperWickHeight / 2;
     const lowerWickCenterY = bodyCenterY - bodyHeight / 2 - lowerWickHeight / 2;
@@ -60,7 +59,6 @@ export function CandlestickCluster({ isMobile = false }) {
     if (groupRef.current) {
       const time = state.clock.getElapsedTime();
       groupRef.current.children.forEach((child, i) => {
-        // Micro organic floating motion for depth
         child.position.y += Math.sin(time * 0.9 + i * 0.35) * 0.0005;
       });
     }
@@ -72,19 +70,19 @@ export function CandlestickCluster({ isMobile = false }) {
         <group key={c.id} position={[c.x, 0, c.z]}>
           {/* Upper Wick */}
           <mesh position={[0, c.upperWickCenterY, 0]}>
-            <cylinderGeometry args={[0.016, 0.016, c.upperWickHeight, 8]} />
+            <cylinderGeometry args={[0.018, 0.018, c.upperWickHeight, 8]} />
             <meshBasicMaterial color={c.color} transparent opacity={0.85} />
           </mesh>
 
           {/* Lower Wick */}
           <mesh position={[0, c.lowerWickCenterY, 0]}>
-            <cylinderGeometry args={[0.016, 0.016, c.lowerWickHeight, 8]} />
+            <cylinderGeometry args={[0.018, 0.018, c.lowerWickHeight, 8]} />
             <meshBasicMaterial color={c.color} transparent opacity={0.85} />
           </mesh>
 
           {/* Candle Body */}
           <mesh position={[0, c.bodyCenterY, 0]}>
-            <boxGeometry args={[0.34, c.bodyHeight, 0.34]} />
+            <boxGeometry args={[0.42, c.bodyHeight, 0.42]} />
             <meshStandardMaterial
               color={c.color}
               roughness={0.15}

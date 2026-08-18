@@ -12,7 +12,8 @@ import HudGlassCards from './HudGlassCards';
 
 export function HeroV2() {
   return (
-    <section className="relative w-full min-h-screen bg-[#050b10] overflow-hidden select-none flex flex-col justify-between pt-24 pb-10">
+    /* Full Viewport Width Breakout: w-screen relative left-[50%] right-[50%] -mx-[50vw] */
+    <section className="relative w-screen left-[50%] right-[50%] -mx-[50vw] min-h-screen bg-[#050b10] overflow-hidden select-none flex flex-col justify-between pt-24 pb-10">
       
       {/* LAYER 0: Rotating Wireframe Dotted Globe (Top-Left) */}
       <DigitalGlobe />
@@ -34,7 +35,7 @@ export function HeroV2() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,11,16,0.85)_100%)] pointer-events-none z-0" />
 
       {/* TOP STATUS BAR: Market Status Pill & Live IST Clock */}
-      <div className="relative z-20 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
+      <div className="relative z-20 px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full flex items-center justify-between pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -63,7 +64,7 @@ export function HeroV2() {
       </div>
 
       {/* HERO LEFT CONTENT OVERLAYS */}
-      <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 max-w-7xl mx-auto w-full py-12">
+      <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full py-12">
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
@@ -109,7 +110,7 @@ export function HeroV2() {
       </div>
 
       {/* FOOTER STRIP */}
-      <div className="relative z-20 px-6 sm:px-12 max-w-7xl mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
+      <div className="relative z-20 px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
         <span>PREMIUM FINTECH EDUCATION</span>
         <div className="flex items-center gap-2 text-teal-400 font-semibold">
           <span>● 60 FPS SVG ANIMATED EXPERIENCE</span>
