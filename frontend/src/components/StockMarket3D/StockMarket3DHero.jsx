@@ -53,27 +53,27 @@ export function StockMarket3DHero({ fallbackHero }) {
         <MarketCanvas progress={scrollProgress} fallback={fallbackHero} />
 
         {/* Ambient Dark Gradient Overlays for Readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#090d16]/80 via-transparent to-[#090d16] pointer-events-none z-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#040814]/90 via-transparent to-[#040814] pointer-events-none z-0" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(4,8,20,0.85)_100%)] pointer-events-none z-0" />
 
         {/* TOP STATUS BAR OVERLAY */}
         <div className="relative z-10 pt-6 px-6 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs text-amber-400 font-mono backdrop-blur-md">
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-xs text-amber-400 font-mono backdrop-blur-md shadow-lg">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span>Phase {activePhase} / 5</span>
-            <span className="text-gray-400">|</span>
+            <span className="text-gray-500">|</span>
             <span className="text-gray-300 font-sans">
               {activePhase === 1 && 'Market Overview'}
-              {activePhase === 2 && 'Price Action Breakdown'}
-              {activePhase === 3 && 'Technical Signals'}
-              {activePhase === 4 && 'Strategy Execution'}
-              {activePhase === 5 && 'Get Started'}
+              {activePhase === 2 && 'Read Price Action'}
+              {activePhase === 3 && 'Analyze Signals'}
+              {activePhase === 4 && 'Trade With Confidence'}
+              {activePhase === 5 && 'Start Journey'}
             </span>
           </div>
 
           {/* Mini Scroll Progress Indicator */}
-          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 font-mono bg-white/5 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
-            <span>SCROLL STORY</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 font-mono bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+            <span>SCROLL PROGRESS</span>
             <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-150"
@@ -97,7 +97,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           >
             <span className="inline-flex items-center gap-2 bg-[#2962FF]/15 text-[#3b82f6] border border-[#2962FF]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(41,98,255,0.3)] backdrop-blur-md">
               <FaChartLine size={12} />
-              Interactive 3D Stock Market Experience
+              Premium 3D Stock Market Academy
             </span>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] text-white">
@@ -141,15 +141,15 @@ export function StockMarket3DHero({ fallbackHero }) {
           >
             <span className="inline-flex items-center gap-2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.25)] backdrop-blur-md">
               <FaLightbulb size={12} />
-              Section 1: Price Action Decoding
+              Section 1: Candlesticks & Trends
             </span>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Understand <span className="text-emerald-400">Price Action</span> & Candlesticks
+              READ <span className="text-emerald-400">PRICE ACTION</span>
             </h2>
 
             <p className="text-sm sm:text-lg text-gray-300 max-w-xl mx-auto font-light leading-relaxed">
-              Decode institutional buying and selling pressure. Master bullish breakouts, candlestick wicks, market momentum, and structural liquidity.
+              Understand candlestick patterns, trends and market structure.
             </p>
           </div>
 
@@ -167,11 +167,11 @@ export function StockMarket3DHero({ fallbackHero }) {
             </span>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Analyze <span className="text-amber-400">Signals</span> & Moving Averages
+              ANALYZE THE <span className="text-amber-400">SIGNALS</span>
             </h2>
 
             <p className="text-sm sm:text-lg text-gray-300 max-w-xl mx-auto font-light leading-relaxed">
-              Overlay 3D moving averages, support & resistance horizontal levels, volume histogram spikes, and high-probability trend indicators.
+              Understand volume, moving averages, support and resistance.
             </p>
           </div>
 
@@ -185,19 +185,19 @@ export function StockMarket3DHero({ fallbackHero }) {
           >
             <span className="inline-flex items-center gap-2 bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(244,63,94,0.25)] backdrop-blur-md">
               <FaShieldAlt size={12} />
-              Section 3: Risk Management Protocols
+              Section 3: Risk Management
             </span>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Trade With <span className="text-rose-400">Absolute Confidence</span>
+              TRADE WITH <span className="text-rose-400">CONFIDENCE</span>
             </h2>
 
             <p className="text-sm sm:text-lg text-gray-300 max-w-xl mx-auto font-light leading-relaxed">
-              Combine technical precision with strict position sizing and emotional control to protect capital and construct consistent wealth.
+              Build disciplined strategies with proper risk management.
             </p>
           </div>
 
-          {/* PHASE 5: START YOUR JOURNEY */}
+          {/* PHASE 5: READY TO MASTER THE MARKET */}
           <div
             className={`transition-all duration-700 space-y-6 transform ${
               activePhase === 5
@@ -207,15 +207,15 @@ export function StockMarket3DHero({ fallbackHero }) {
           >
             <span className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 text-amber-300 border border-amber-500/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.3)] backdrop-blur-md">
               <FaRocket size={12} />
-              Ready To Become A Dhan Vijeta?
+              Complete Learning Journey
             </span>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Start Your <span className="gradient-gold">Trading Journey</span> Today
+              READY TO MASTER <span className="gradient-gold">THE MARKET?</span>
             </h2>
 
             <p className="text-sm sm:text-lg text-gray-300 max-w-xl mx-auto font-light leading-relaxed">
-              Join 15,000+ traders mastering stock market trading through structured curriculum, live trade reviews, and practitioner strategies.
+              Explore the complete learning journey.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
@@ -231,7 +231,7 @@ export function StockMarket3DHero({ fallbackHero }) {
                 className="bg-white/10 border border-white/20 hover:border-amber-400 text-white font-bold px-8 py-4 rounded-xl backdrop-blur-md flex items-center gap-2 transition duration-300"
               >
                 <FaPlay size={14} className="text-amber-400" />
-                <span>Watch Free Lectures</span>
+                <span>Watch Demo Lectures</span>
               </Link>
             </div>
           </div>
