@@ -7,7 +7,7 @@ export function DigitalGlobe({ isMobile = false }) {
   const radius = isMobile ? 3.8 : 5.8;
   const count = isMobile ? 400 : 950;
 
-  // Generate 3D sphere point cloud with gold and cyan financial node points
+  // Generate 3D sphere point cloud with gold (#fbbf24) and cyan (#00e5ff) node points
   const [positions, colors] = useState(() => {
     const pos = new Float32Array(count * 3);
     const col = new Float32Array(count * 3);
@@ -20,7 +20,6 @@ export function DigitalGlobe({ isMobile = false }) {
       pos[i * 3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
       pos[i * 3 + 2] = radius * Math.cos(phi);
 
-      // Mix of cyan (#00e5ff) and gold (#fbbf24) particles matching reference image
       const isGold = i % 3 === 0;
       col[i * 3] = isGold ? 0.98 : 0.0;     // R
       col[i * 3 + 1] = isGold ? 0.75 : 0.9; // G
@@ -44,7 +43,7 @@ export function DigitalGlobe({ isMobile = false }) {
         <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.07} />
       </mesh>
 
-      {/* Particle Globe Cloud */}
+      {/* Glowing Particle Globe Cloud */}
       <Points ref={globeRef} positions={positions} colors={colors} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent

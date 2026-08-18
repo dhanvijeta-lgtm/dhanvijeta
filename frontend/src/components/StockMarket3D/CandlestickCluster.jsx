@@ -1,16 +1,16 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
-// 34-Candle dataset forming the exact S-curve trajectory matching the reference image
+// 34-Candle dataset forming the exact steep rising trajectory matching the reference image
 const getStockChartDataset = (isMobile = false) => {
   const count = isMobile ? 18 : 34;
-  const spacingX = isMobile ? 0.95 : 0.86;
+  const spacingX = isMobile ? 0.95 : 0.88;
   const candles = [];
 
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1);
     
-    // Wave profile: low consolidation left -> pullback dip -> steep bullish push to top right
+    // Wave profile: starts low at left, slight dip, then steep exponential climb to top right
     let yBase = -3.2 + Math.pow(t, 1.75) * 7.8;
     if (i < 6) {
       yBase = -2.8 + (i * 0.05) - (Math.sin(i * 0.8) * 0.28);
