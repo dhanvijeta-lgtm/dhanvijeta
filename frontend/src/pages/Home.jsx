@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlay, FaGraduationCap, FaChartLine, FaShieldAlt, FaUsers, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import StockMarket3DHero from '../components/StockMarket3D/StockMarket3DHero';
 
 export function Home() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -71,51 +72,54 @@ export function Home() {
         </div>
       </div>
 
-      {/* 2. HERO SECTION */}
-      <section className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto pt-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-6"
-        >
-          <span className="bg-[#2962FF]/15 text-[#3b82f6] border border-[#2962FF]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(41,98,255,0.25)]">
-            Premium Stock Market Academy
-          </span>
+      {/* 2. HERO SECTION WITH 3D SCROLL-DRIVEN EXPERIENCE */}
+      <StockMarket3DHero
+        fallbackHero={
+          <section className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto pt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6"
+            >
+              <span className="bg-[#2962FF]/15 text-[#3b82f6] border border-[#2962FF]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(41,98,255,0.25)]">
+                Premium Stock Market Academy
+              </span>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-white">
-            Master the Stock Market with{' '}
-            <span className="gradient-gold">Dhan Vijeta</span>
-          </h1>
+              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-white">
+                Master the Stock Market with{' '}
+                <span className="gradient-gold">Dhan Vijeta</span>
+              </h1>
 
-          <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed">
-            Gain the edge in trading and investing. Learn price action rules, trading psychology hacks, and futures & options systems directly from industry practitioners.
-          </p>
-        </motion.div>
+              <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed">
+                Gain the edge in trading and investing. Learn price action rules, trading psychology hacks, and futures & options systems directly from industry practitioners.
+              </p>
+            </motion.div>
 
-        {/* Hero CTAs */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 mt-8 w-full justify-center px-6"
-        >
-          <Link
-            to="/courses"
-            className="bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-finance-dark font-black px-8 py-4 rounded-xl shadow-gold-glow flex items-center justify-center gap-2 transition duration-300"
-          >
-            <span>Explore Courses</span>
-            <FaGraduationCap size={18} />
-          </Link>
-          <Link
-            to="/demo-videos"
-            className="bg-finance-navy border border-white/10 hover:border-finance-gold text-white font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 transition duration-300"
-          >
-            <FaPlay size={14} className="text-finance-gold" />
-            <span>Watch Demo Lectures</span>
-          </Link>
-        </motion.div>
-      </section>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 mt-8 w-full justify-center px-6"
+            >
+              <Link
+                to="/courses"
+                className="bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-finance-dark font-black px-8 py-4 rounded-xl shadow-gold-glow flex items-center justify-center gap-2 transition duration-300"
+              >
+                <span>Explore Courses</span>
+                <FaGraduationCap size={18} />
+              </Link>
+              <Link
+                to="/demo-videos"
+                className="bg-finance-navy border border-white/10 hover:border-finance-gold text-white font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 transition duration-300"
+              >
+                <FaPlay size={14} className="text-finance-gold" />
+                <span>Watch Demo Lectures</span>
+              </Link>
+            </motion.div>
+          </section>
+        }
+      />
 
       {/* 3. METRIC STATISTICS TICKER */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
