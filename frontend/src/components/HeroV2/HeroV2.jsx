@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaGraduationCap, FaPlay, FaArrowRight } from 'react-icons/fa';
@@ -11,24 +11,39 @@ import TechnicalOverlay from './TechnicalOverlay';
 import HudGlassCards from './HudGlassCards';
 
 export function HeroV2() {
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+
+  const handlePointerMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    setPointer({ x: x * 18, y: y * 18 });
+  };
+
+  const handlePointerLeave = () => setPointer({ x: 0, y: 0 });
+
   return (
     /* Full Viewport Width Breakout: w-screen relative left-[50%] right-[50%] -mx-[50vw] */
-    <section className="relative w-screen left-[50%] right-[50%] -mx-[50vw] min-h-screen bg-[#030710] overflow-hidden select-none flex flex-col justify-between pt-24 pb-10">
+    <section
+      onMouseMove={handlePointerMove}
+      onMouseLeave={handlePointerLeave}
+      className="relative w-screen left-[50%] right-[50%] -mx-[50vw] min-h-screen bg-[#030810] overflow-hidden select-none flex flex-col justify-between pt-4 pb-6"
+    >
       
       {/* LAYER 0: Rotating Wireframe Dotted Globe (Top-Left) */}
-      <DigitalGlobe />
+      <DigitalGlobe pointer={pointer} />
 
       {/* LAYER 1: Aurora Wave Terrain Drift (Bottom Third) */}
-      <AuroraWaveTerrain />
+      <AuroraWaveTerrain pointer={pointer} />
 
       {/* LAYER 2: Animated SVG Candlestick Chart (Staggered Load Reveal) */}
-      <CandlestickChart />
+      <CandlestickChart pointer={pointer} />
 
       {/* LAYER 3: Glowing Teal Price Line + Gold Sweeping Particles + Grid Axes */}
-      <TechnicalOverlay />
+      <TechnicalOverlay pointer={pointer} />
 
       {/* LAYER 4: Floating Glassmorphic Stat Cards (Isolated Flicker State) */}
-      <HudGlassCards />
+      <HudGlassCards pointer={pointer} />
 
       {/* Ambient Dark Background Illumination & Soft Radial Vignette */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#030710]/90 via-transparent to-[#030710] pointer-events-none z-0" />

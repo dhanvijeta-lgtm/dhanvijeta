@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export function TechnicalOverlay() {
+export function TechnicalOverlay({ pointer = { x: 0, y: 0 } }) {
   const priceLabels = ['25,400', '24,800', '24,200', '23,800', '23,400'];
   const timeLabels = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
 
@@ -12,7 +12,9 @@ export function TechnicalOverlay() {
     >
       <div
         className="w-[85%] sm:w-[78%] lg:w-[72%] h-[70%] origin-bottom-right"
-        style={{ transform: 'rotateX(18deg) rotateY(-12deg) rotateZ(1deg)' }}
+        style={{
+          transform: `translate(${pointer.x * 1.2}px, ${pointer.y * 1.2}px) rotateX(${18 - pointer.y * 0.5}deg) rotateY(${(-12 + pointer.x * 0.6).toFixed(2)}deg) rotateZ(1deg)`
+        }}
       >
         <svg className="w-full h-full overflow-visible" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid meet">
           <defs>

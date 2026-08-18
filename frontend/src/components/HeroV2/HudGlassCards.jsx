@@ -29,7 +29,7 @@ function CountUp({ target, decimals = 2, delay = 0.5, duration = 1800 }) {
   );
 }
 
-export function HudGlassCards() {
+export function HudGlassCards({ pointer = { x: 0, y: 0 } }) {
   const [nifty, setNifty] = useState({ val: 24320.15, change: '+1.24%', flash: false, isUp: true });
   const [bankNifty, setBankNifty] = useState({ val: 52140.80, change: '+0.87%', flash: false, isUp: true });
 
@@ -63,7 +63,10 @@ export function HudGlassCards() {
   }, []);
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-10 hidden lg:block overflow-hidden">
+    <div
+      className="absolute inset-0 pointer-events-none z-10 hidden lg:block overflow-hidden"
+      style={{ transform: `translate(${pointer.x * 0.8}px, ${pointer.y * 0.8}px)` }}
+    >
 
       {/* NIFTY 50 */}
       <motion.div

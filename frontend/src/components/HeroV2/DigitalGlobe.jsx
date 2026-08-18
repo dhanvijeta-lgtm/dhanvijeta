@@ -77,7 +77,7 @@ function GoldenLandParticles({ radius, isMobile }) {
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.getElapsedTime();
-    ref.current.material.opacity = 0.82 + Math.sin(t * 1.2) * 0.08;
+    ref.current.material.opacity = 0.9 + Math.sin(t * 1.2) * 0.08;
   });
 
   return (
@@ -85,11 +85,11 @@ function GoldenLandParticles({ radius, isMobile }) {
       <PointMaterial
         transparent
         vertexColors
-        size={0.07 * scale}
+        size={0.09 * scale}
         sizeAttenuation
         depthWrite={false}
         blending={THREE.AdditiveBlending}
-        opacity={0.9}
+        opacity={0.95}
       />
     </Points>
   );
@@ -108,11 +108,11 @@ function AtmosphereParticles({ radius, isMobile }) {
       <PointMaterial
         transparent
         color="#00E5FF"
-        size={isMobile ? 0.025 : 0.035}
+        size={isMobile ? 0.03 : 0.04}
         sizeAttenuation
         depthWrite={false}
         blending={THREE.AdditiveBlending}
-        opacity={0.18}
+        opacity={0.35}
       />
     </Points>
   );
@@ -161,13 +161,13 @@ function GlobeScene({ isMobile }) {
       {/* Dark sphere body */}
       <mesh>
         <sphereGeometry args={[radius * 0.992, 48, 48]} />
-        <meshBasicMaterial color="#060a12" transparent opacity={0.92} />
+        <meshBasicMaterial color="#04070d" transparent opacity={1} />
       </mesh>
 
       {/* Subtle wireframe mesh */}
       <mesh>
         <sphereGeometry args={[radius * 1.002, 36, 36]} />
-        <meshBasicMaterial color="#1a2840" wireframe transparent opacity={0.06} />
+        <meshBasicMaterial color="#1a2840" wireframe transparent opacity={0.08} />
       </mesh>
 
       {/* Golden city-light landmass particles */}
@@ -219,7 +219,7 @@ function GlobeCanvas({ isMobile }) {
   );
 }
 
-export function DigitalGlobe() {
+export function DigitalGlobe({ pointer = { x: 0, y: 0 } }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
@@ -228,7 +228,8 @@ export function DigitalGlobe() {
       <div
         className="absolute top-[0%] left-[10%] sm:left-[18%] w-[90vw] sm:w-[75vw] h-[70vh] motion-reduce:opacity-80"
         style={{
-          background: 'radial-gradient(ellipse at 45% 40%, rgba(255,184,0,0.28) 0%, rgba(255,159,0,0.08) 35%, transparent 68%)'
+          background: 'radial-gradient(ellipse at 45% 40%, rgba(255,184,0,0.28) 0%, rgba(255,159,0,0.08) 35%, transparent 68%)',
+          transform: `translate(${pointer.x * 0.6}px, ${pointer.y * 0.6}px)`
         }}
       />
 
@@ -236,12 +237,18 @@ export function DigitalGlobe() {
       <div
         className="absolute top-[5%] left-[15%] sm:left-[22%] w-[80vw] sm:w-[65vw] h-[60vh] opacity-60"
         style={{
-          background: 'radial-gradient(ellipse at 50% 45%, rgba(0,229,255,0.06) 0%, transparent 55%)'
+          background: 'radial-gradient(ellipse at 50% 45%, rgba(0,229,255,0.06) 0%, transparent 55%)',
+          transform: `translate(${pointer.x * 0.8}px, ${pointer.y * 0.8}px)`
         }}
       />
 
       {/* Three.js globe canvas */}
-      <div className="absolute top-[-2%] left-[5%] sm:left-[12%] w-[95vw] sm:w-[78vw] lg:w-[68vw] h-[68vh] sm:h-[72vh]">
+      <div
+        className="absolute top-[-2%] left-[5%] sm:left-[12%] w-[95vw] sm:w-[78vw] lg:w-[68vw] h-[68vh] sm:h-[72vh]"
+        style={{
+          transform: `translate(${pointer.x * 1.2}px, ${pointer.y * 1.2}px) rotateX(${pointer.y * -0.2}deg) rotateY(${pointer.x * 0.4}deg)`
+        }}
+      >
         <GlobeCanvas isMobile={isMobile} />
       </div>
     </div>

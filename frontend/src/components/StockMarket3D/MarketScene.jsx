@@ -7,7 +7,13 @@ import TechnicalIndicators from './TechnicalIndicators';
 import FloatingParticles from './FloatingParticles';
 import DigitalGlobe from './DigitalGlobe';
 
-export function MarketScene({ progress = 0, isMobile = false }) {
+export function MarketScene({
+  progress = 0,
+  isMobile = false,
+  onHoverCandle,
+  hoveredCandleId,
+  isClicked = false
+}) {
   const { camera } = useThree();
   const targetPos = useRef(new THREE.Vector3(0, 0.5, 11.5));
   const targetLook = useRef(new THREE.Vector3(0, 0.2, 0));
@@ -25,8 +31,8 @@ export function MarketScene({ progress = 0, isMobile = false }) {
     const handleMouseMove = (e) => {
       if (isMobile) return;
       mouseRef.current = {
-        x: (e.clientX / window.innerWidth - 0.5) * 0.4,
-        y: (e.clientY / window.innerHeight - 0.5) * 0.4
+        x: (e.clientX / window.innerWidth - 0.5) * 0.45,
+        y: (e.clientY / window.innerHeight - 0.5) * 0.45
       };
     };
 
@@ -78,17 +84,18 @@ export function MarketScene({ progress = 0, isMobile = false }) {
       }
     }
 
+    // Weighted Mouse Parallax Lerping Engine
     if (!isMobile && !reducedMotion) {
-      px += mouseRef.current.x * 0.6;
-      py += -mouseRef.current.y * 0.6;
-      lx += mouseRef.current.x * 0.25;
-      ly += -mouseRef.current.y * 0.25;
+      px += mouseRef.current.x * 0.7;
+      py += -mouseRef.current.y * 0.7;
+      lx += mouseRef.current.x * 0.3;
+      ly += -mouseRef.current.y * 0.3;
     }
 
     targetPos.current.set(px, py, pz);
     targetLook.current.set(lx, ly, lz);
 
-    const lerpSpeed = Math.min(1, delta * 3.6);
+    const lerpSpeed = Math.min(1, delta * 3.8);
     camera.position.lerp(targetPos.current, lerpSpeed);
     currentLook.current.lerp(targetLook.current, lerpSpeed);
     camera.lookAt(currentLook.current);
@@ -106,11 +113,16 @@ export function MarketScene({ progress = 0, isMobile = false }) {
       <pointLight position={[10, 6, 6]} intensity={1.8} color="#fbbf24" />
       <pointLight position={[0, -4, 6]} intensity={1.4} color="#00e5ff" />
 
-      {/* 3D Digital Globe in Top-Left Background */}
-      <DigitalGlobe isMobile={isMobile} />
+      {/* 3D Digital Globe */}
+      <DigitalGlobe isMobile={isMobile} isClicked={isClicked} />
 
-      {/* 3D Scene Components */}
-      <CandlestickCluster isMobile={isMobile} />
+      {/* Interactive Candlestick Cluster */}
+      <CandlestickCluster
+        isMobile={isMobile}
+        onHoverCandle={onHoverCandle}
+        hoveredCandleId={hoveredCandleId}
+      />
+
       <ChartGrid isMobile={isMobile} />
       <TechnicalIndicators progress={progress} isMobile={isMobile} />
       <FloatingParticles isMobile={isMobile} />

@@ -2,12 +2,12 @@ import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 
-export function DigitalGlobe({ isMobile = false }) {
+export function DigitalGlobe({ isMobile = false, isClicked = false }) {
   const globeRef = useRef();
   const radius = isMobile ? 3.8 : 5.8;
   const count = isMobile ? 400 : 950;
+  const pulseScale = useRef(1);
 
-  // Generate 3D sphere point cloud with gold (#fbbf24) and cyan (#00e5ff) node points
   const [positions, colors] = useState(() => {
     const pos = new Float32Array(count * 3);
     const col = new Float32Array(count * 3);
@@ -32,6 +32,13 @@ export function DigitalGlobe({ isMobile = false }) {
     if (globeRef.current) {
       globeRef.current.rotation.y += delta * 0.035;
       globeRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.15) * 0.08;
+
+      // Handle Click Data Pulse Wave Animation
+      if (isClicked) {
+        pulseScale.current = 1.08;
+      }
+      pulseScale.current += (1 - pulseScale.current) * 0.1;
+      globeRef.current.scale.setScalar(pulseScale.current);
     }
   });
 
@@ -40,7 +47,7 @@ export function DigitalGlobe({ isMobile = false }) {
       {/* Outer Wireframe Sphere */}
       <mesh>
         <sphereGeometry args={[radius, 28, 28]} />
-        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.07} />
+        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.08} />
       </mesh>
 
       {/* Glowing Particle Globe Cloud */}
@@ -51,7 +58,7 @@ export function DigitalGlobe({ isMobile = false }) {
           size={isMobile ? 0.07 : 0.09}
           sizeAttenuation={true}
           depthWrite={false}
-          opacity={0.45}
+          opacity={0.48}
         />
       </Points>
     </group>

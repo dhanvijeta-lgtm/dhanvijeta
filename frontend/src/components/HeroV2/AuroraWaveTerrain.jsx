@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export function AuroraWaveTerrain() {
+export function AuroraWaveTerrain({ pointer = { x: 0, y: 0 } }) {
   return (
-    <div className="absolute inset-x-0 bottom-0 h-[48%] pointer-events-none z-[1] overflow-hidden">
+    <div
+      className="absolute inset-x-0 bottom-0 h-[48%] pointer-events-none z-[1] overflow-hidden"
+      style={{ transform: `translate(${pointer.x * 0.8}px, ${pointer.y * 0.5}px)` }}
+    >
       <svg
         className="w-[200%] h-full absolute bottom-0 left-0 animate-drift motion-reduce:animate-none"
         preserveAspectRatio="none"

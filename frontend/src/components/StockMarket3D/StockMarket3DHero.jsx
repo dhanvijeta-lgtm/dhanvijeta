@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { FaGraduationCap, FaPlay, FaArrowRight, FaChartLine, FaChartBar, FaClock, FaChartPie } from 'react-icons/fa';
+import { FaGraduationCap, FaPlay, FaArrowRight, FaChartLine, FaChartBar, FaClock, FaChartPie, FaTimes, FaLayerGroup } from 'react-icons/fa';
 import MarketCanvas from './MarketCanvas';
+import MarketTooltip from './MarketTooltip';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,6 +16,16 @@ export function StockMarket3DHero({ fallbackHero }) {
 
   // Live IST Clock
   const [currentTime, setCurrentTime] = useState('');
+
+  // Interactive Candle Inspector Hover State
+  const [hoveredCandle, setHoveredCandle] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState(null);
+
+  // Click Ripple Data Pulse State
+  const [isClicked, setIsClicked] = useState(false);
+
+  // Interactive Card Detail Modal Drawer State
+  const [activeCardModal, setActiveCardModal] = useState(null);
 
   // Mouse Parallax for Layer 3 (Foreground HUD Elements)
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
@@ -80,14 +91,37 @@ export function StockMarket3DHero({ fallbackHero }) {
     return () => ctx.revert();
   }, []);
 
+  const handleHeroClick = () => {
+    setIsClicked(true);
+    setTimeout(() => setIsClicked(false), 300);
+  };
+
+  const handleHoverCandle = (candle, pos) => {
+    setHoveredCandle(candle);
+    setTooltipPos(pos);
+  };
+
   return (
     /* Full Viewport Width Breakout: w-screen relative left-[50%] right-[50%] -mx-[50vw] */
-    <div ref={containerRef} className="relative w-screen left-[50%] right-[50%] -mx-[50vw] h-[320vh] bg-[#030710] select-none">
+    <div
+      ref={containerRef}
+      onClick={handleHeroClick}
+      className="relative w-screen left-[50%] right-[50%] -mx-[50vw] h-[320vh] bg-[#030710] select-none"
+    >
       {/* Sticky Viewport Container Pinned by GSAP ScrollTrigger */}
       <div ref={stickyRef} className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         
         {/* 3D Canvas Background (Layer 1 & Layer 2) */}
-        <MarketCanvas progress={scrollProgress} fallback={fallbackHero} />
+        <MarketCanvas
+          progress={scrollProgress}
+          fallback={fallbackHero}
+          onHoverCandle={handleHoverCandle}
+          hoveredCandleId={hoveredCandle?.id}
+          isClicked={isClicked}
+        />
+
+        {/* Interactive Glassmorphic Candle Inspector Tooltip */}
+        <MarketTooltip hoveredCandle={hoveredCandle} position={tooltipPos} />
 
         {/* Layer 1: Dark Background Illumination & Soft Radial Glow */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#030710]/90 via-transparent to-[#030710] pointer-events-none z-0" />
@@ -129,9 +163,16 @@ export function StockMarket3DHero({ fallbackHero }) {
           }}
         >
           {/* TOP RIGHT CARD 1: NIFTY 50 */}
-          <div className={`absolute top-[14%] right-[18%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 2 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveCardModal('NIFTY 50');
+            }}
+            className={`absolute top-[14%] right-[18%] bg-[#090d16]/85 border border-white/10 hover:border-[#00e5a0]/60 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-300 w-52 cursor-pointer hover:scale-105 pointer-events-auto ${activePhase <= 2 ? 'opacity-95' : 'opacity-25'}`}
+          >
             <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
               <span className="flex items-center gap-1.5"><FaChartLine className="text-[#00e5a0]" /> NIFTY 50</span>
+              <span className="text-[9px] text-emerald-400 font-bold uppercase">LIVE</span>
             </div>
             <div className="flex items-baseline justify-between">
               <span className="text-lg font-bold text-white tracking-tight">24,320.15</span>
@@ -143,9 +184,16 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* TOP RIGHT CARD 2: BANK NIFTY */}
-          <div className={`absolute top-[14%] right-[3%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-52 ${activePhase <= 3 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveCardModal('BANK NIFTY');
+            }}
+            className={`absolute top-[14%] right-[3%] bg-[#090d16]/85 border border-white/10 hover:border-amber-400/60 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-300 w-52 cursor-pointer hover:scale-105 pointer-events-auto ${activePhase <= 3 ? 'opacity-95' : 'opacity-25'}`}
+          >
             <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
               <span className="flex items-center gap-1.5"><FaChartBar className="text-[#00e5a0]" /> BANK NIFTY</span>
+              <span className="text-[9px] text-amber-400 font-bold uppercase">LIVE</span>
             </div>
             <div className="flex items-baseline justify-between">
               <span className="text-lg font-bold text-white tracking-tight">52,140.80</span>
@@ -157,7 +205,13 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* TOP RIGHT CARD 3: MARKET SENTIMENT */}
-          <div className={`absolute top-[34%] right-[4%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-56 ${activePhase >= 2 && activePhase <= 4 ? 'opacity-95 scale-100' : 'opacity-25 scale-95'}`}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveCardModal('MARKET SENTIMENT');
+            }}
+            className={`absolute top-[34%] right-[4%] bg-[#090d16]/85 border border-white/10 hover:border-[#00e5a0]/60 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-300 w-56 cursor-pointer hover:scale-105 pointer-events-auto ${activePhase >= 2 && activePhase <= 4 ? 'opacity-95' : 'opacity-25'}`}
+          >
             <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block mb-1">MARKET SENTIMENT</span>
             <div className="flex items-center gap-2">
               <span className="text-xl">🐂</span>
@@ -169,7 +223,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 1: VOLUME */}
-          <div className={`absolute bottom-[10%] left-[3%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[3%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95' : 'opacity-30'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400">
                 <FaChartBar size={16} />
@@ -183,7 +237,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 2: 52W HIGH */}
-          <div className={`absolute bottom-[10%] left-[17%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[17%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95' : 'opacity-30'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-[#00e5a0]">
                 <FaClock size={16} />
@@ -197,7 +251,7 @@ export function StockMarket3DHero({ fallbackHero }) {
           </div>
 
           {/* BOTTOM CARD 3: ADVANCES / MARKET DEPTH */}
-          <div className={`absolute bottom-[10%] left-[31%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95 scale-100' : 'opacity-30 scale-95'}`}>
+          <div className={`absolute bottom-[10%] left-[31%] bg-[#090d16]/85 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-700 w-48 ${activePhase >= 1 ? 'opacity-95' : 'opacity-30'}`}>
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-sky-500/10 rounded-xl border border-sky-500/20 text-[#00e5ff]">
                 <FaChartPie size={16} />
@@ -210,6 +264,61 @@ export function StockMarket3DHero({ fallbackHero }) {
             </div>
           </div>
         </div>
+
+        {/* INTERACTIVE CARD DETAIL MODAL OVERLAY */}
+        {activeCardModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+            onClick={() => setActiveCardModal(null)}
+          >
+            <div
+              className="bg-[#090d16] border border-white/15 rounded-2xl p-6 max-w-md w-full text-left space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <FaLayerGroup className="text-amber-400" />
+                  <h3 className="text-lg font-bold text-white font-mono">{activeCardModal}</h3>
+                </div>
+                <button
+                  onClick={() => setActiveCardModal(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  <FaTimes size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-3 font-mono text-xs text-gray-300">
+                <div className="flex justify-between p-2.5 bg-white/5 rounded-xl">
+                  <span>DAY RANGE</span>
+                  <span className="text-white font-bold">24,110.20 — 24,350.80</span>
+                </div>
+                <div className="flex justify-between p-2.5 bg-white/5 rounded-xl">
+                  <span>52-WEEK RANGE</span>
+                  <span className="text-white font-bold">19,800.00 — 25,148.30</span>
+                </div>
+                <div className="flex justify-between p-2.5 bg-white/5 rounded-xl">
+                  <span>INSTITUTIONAL FLOW</span>
+                  <span className="text-[#00e5a0] font-bold">+₹1,420 CR (NET BUY)</span>
+                </div>
+                <div className="flex justify-between p-2.5 bg-white/5 rounded-xl">
+                  <span>VOLATILITY INDEX (INDIA VIX)</span>
+                  <span className="text-amber-400 font-bold">13.45 (-2.10%)</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  to="/courses"
+                  onClick={() => setActiveCardModal(null)}
+                  className="w-full bg-gradient-to-r from-amber-600 to-yellow-400 text-finance-dark font-black py-3 rounded-xl flex items-center justify-center gap-2 shadow-gold-glow"
+                >
+                  <span>Master Technical Analysis →</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CENTER CONTENT STORYTELLING OVERLAYS */}
         <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full">

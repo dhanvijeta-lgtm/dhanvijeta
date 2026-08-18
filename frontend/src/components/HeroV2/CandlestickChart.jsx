@@ -39,7 +39,7 @@ const generateCandleSeries = () => {
   return candles;
 };
 
-export function CandlestickChart() {
+export function CandlestickChart({ pointer = { x: 0, y: 0 } }) {
   const candles = useMemo(() => generateCandleSeries(), []);
 
   return (
@@ -49,7 +49,9 @@ export function CandlestickChart() {
     >
       <div
         className="w-[85%] sm:w-[78%] lg:w-[72%] h-[70%] origin-bottom-right"
-        style={{ transform: 'rotateX(18deg) rotateY(-12deg) rotateZ(1deg)' }}
+        style={{
+          transform: `translate(${pointer.x * 1.1}px, ${pointer.y * 1.1}px) rotateX(${18 - pointer.y * 0.4}deg) rotateY(${(-12 + pointer.x * 0.5).toFixed(2)}deg) rotateZ(1deg)`
+        }}
       >
         <svg className="w-full h-full overflow-visible" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid meet">
           <defs>
