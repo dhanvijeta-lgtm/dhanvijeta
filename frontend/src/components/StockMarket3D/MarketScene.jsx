@@ -17,13 +17,11 @@ export function MarketScene({ progress = 0, isMobile = false }) {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    // Check OS reduced motion preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mediaQuery.matches);
     const handleChange = (e) => setReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handleChange);
 
-    // Desktop 3-Layer Cursor Mouse Parallax Listener
     const handleMouseMove = (e) => {
       if (isMobile) return;
       mouseRef.current = {
@@ -44,13 +42,10 @@ export function MarketScene({ progress = 0, isMobile = false }) {
     let lx = 0, ly = 0.2, lz = 0;
 
     if (reducedMotion) {
-      // Gentle stationary composition
       px = 0; py = 0.4; pz = 10.8;
       lx = 0; ly = 0.2; lz = 0;
     } else {
-      // 5-Phase Camera Path framing the steep chart trajectory
       if (progress < 0.22) {
-        // Phase 1: Wide View framing full steep chart matching attached image
         const t = progress / 0.22;
         px = THREE.MathUtils.lerp(0, -1.8, t);
         py = THREE.MathUtils.lerp(0.5, 0.2, t);
@@ -59,7 +54,6 @@ export function MarketScene({ progress = 0, isMobile = false }) {
         ly = THREE.MathUtils.lerp(0.2, 0.5, t);
         lz = THREE.MathUtils.lerp(0, -0.8, t);
       } else if (progress < 0.52) {
-        // Phase 2: Fly-Through into Steep Candlestick Trail
         const t = (progress - 0.22) / 0.30;
         px = THREE.MathUtils.lerp(-1.8, 2.2, t);
         py = THREE.MathUtils.lerp(0.2, 1.2, t);
@@ -68,7 +62,6 @@ export function MarketScene({ progress = 0, isMobile = false }) {
         ly = THREE.MathUtils.lerp(0.5, 0.8, t);
         lz = THREE.MathUtils.lerp(-0.8, -1.2, t);
       } else if (progress < 0.78) {
-        // Phase 3: Analysis Focus on MA, Support/Resistance & Volume
         const t = (progress - 0.52) / 0.26;
         px = THREE.MathUtils.lerp(2.2, 0, t);
         py = THREE.MathUtils.lerp(1.2, 3.5, t);
@@ -77,7 +70,6 @@ export function MarketScene({ progress = 0, isMobile = false }) {
         ly = THREE.MathUtils.lerp(0.8, 0.3, t);
         lz = THREE.MathUtils.lerp(-1.2, 0, t);
       } else {
-        // Phase 4 & 5: Panoramic Master Pullback & Final CTA Frame
         const t = (progress - 0.78) / 0.22;
         px = THREE.MathUtils.lerp(0, 0, t);
         py = THREE.MathUtils.lerp(3.5, 0.6, t);
@@ -86,7 +78,6 @@ export function MarketScene({ progress = 0, isMobile = false }) {
       }
     }
 
-    // Apply Desktop Mouse Move Parallax
     if (!isMobile && !reducedMotion) {
       px += mouseRef.current.x * 0.6;
       py += -mouseRef.current.y * 0.6;
@@ -97,7 +88,6 @@ export function MarketScene({ progress = 0, isMobile = false }) {
     targetPos.current.set(px, py, pz);
     targetLook.current.set(lx, ly, lz);
 
-    // Frame-rate independent smooth lerp
     const lerpSpeed = Math.min(1, delta * 3.6);
     camera.position.lerp(targetPos.current, lerpSpeed);
     currentLook.current.lerp(targetLook.current, lerpSpeed);
@@ -106,15 +96,15 @@ export function MarketScene({ progress = 0, isMobile = false }) {
 
   return (
     <>
-      {/* Dark Ambient Atmosphere & Soft Depth Fog */}
-      <fogExp2 attach="fog" color="#040814" density={0.032} />
+      {/* Dark Ambient Atmosphere matching #030710 */}
+      <fogExp2 attach="fog" color="#030710" density={0.032} />
 
       {/* Studio Lighting */}
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[10, 16, 10]} intensity={1.6} color="#ffffff" />
-      <pointLight position={[-10, 8, -5]} intensity={2.0} color="#059669" />
-      <pointLight position={[10, 6, 6]} intensity={1.8} color="#f59e0b" />
-      <pointLight position={[0, -4, 6]} intensity={1.2} color="#00E5FF" />
+      <ambientLight intensity={0.75} />
+      <directionalLight position={[10, 16, 10]} intensity={1.7} color="#ffffff" />
+      <pointLight position={[-10, 8, -5]} intensity={2.2} color="#00e5a0" />
+      <pointLight position={[10, 6, 6]} intensity={1.8} color="#fbbf24" />
+      <pointLight position={[0, -4, 6]} intensity={1.4} color="#00e5ff" />
 
       {/* 3D Digital Globe in Top-Left Background */}
       <DigitalGlobe isMobile={isMobile} />
