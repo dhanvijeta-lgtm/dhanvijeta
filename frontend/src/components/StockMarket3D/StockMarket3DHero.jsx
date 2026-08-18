@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { FaGraduationCap, FaPlay, FaArrowRight } from 'react-icons/fa';
+import { FaGraduationCap, FaPlay, FaArrowRight, FaChartLine, FaChartBar, FaShieldAlt } from 'react-icons/fa';
 import MarketCanvas from './MarketCanvas';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -12,6 +12,21 @@ export function StockMarket3DHero({ fallbackHero }) {
   const stickyRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activePhase, setActivePhase] = useState(1);
+
+  // Mouse Parallax for Layer 3 (Foreground HUD Elements)
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (window.innerWidth < 768) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 18;
+      const y = (e.clientY / window.innerHeight - 0.5) * 18;
+      setMouseOffset({ x, y });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -45,20 +60,33 @@ export function StockMarket3DHero({ fallbackHero }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full h-[320vh] bg-transparent">
+    <div ref={containerRef} className="relative w-full h-[320vh] bg-transparent select-none">
       {/* Sticky Viewport Container Pinned by GSAP ScrollTrigger */}
       <div ref={stickyRef} className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
         
-        {/* 3D Canvas Background */}
+        {/* 3D Canvas Background (Layer 1 & Layer 2) */}
         <MarketCanvas progress={scrollProgress} fallback={fallbackHero} />
 
-        {/* Ambient Dark Background Illumination & Subtle Vignette */}
+        {/* Layer 1: Ambient Dark Background Illumination & Soft Vignette */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#040814]/90 via-transparent to-[#040814] pointer-events-none z-0" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(4,8,20,0.85)_100%)] pointer-events-none z-0" />
 
-        {/* TOP EDITORIAL PHASE INDICATOR */}
-        <div className="relative z-10 pt-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-3 text-xs font-mono text-gray-400 tracking-widest uppercase">
+        {/* TOP STATUS BAR & MARKET OPEN INDICATOR */}
+        <div className="relative z-20 pt-7 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
+          {/* Market Status Pill */}
+          <div className="flex items-center gap-2.5 bg-[#090d16]/80 border border-white/10 px-4 py-2 rounded-full text-xs font-mono backdrop-blur-md shadow-xl pointer-events-auto">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-emerald-400 font-bold tracking-wider">MARKET OPEN</span>
+            <span className="text-gray-600">|</span>
+            <span className="text-gray-300 font-sans">NIFTY 50</span>
+            <span className="text-emerald-400 font-semibold">+1.24%</span>
+          </div>
+
+          {/* Minimal Editorial Phase Badge */}
+          <div className="flex items-center gap-3 text-xs font-mono text-gray-400 tracking-widest uppercase bg-[#090d16]/70 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
             <span className="text-amber-400 font-bold">0{activePhase}</span>
             <span className="text-gray-600">—</span>
             <span className="text-gray-300 font-sans tracking-wide text-[11px] sm:text-xs">
@@ -69,14 +97,57 @@ export function StockMarket3DHero({ fallbackHero }) {
               {activePhase === 5 && 'START JOURNEY'}
             </span>
           </div>
+        </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-gray-500 tracking-widest uppercase">
-            <span>DHAN VIJETA ACADEMY</span>
+        {/* LAYER 3: FLOATING FINANCIAL HUD DATA CARDS (3x Parallax Offset) */}
+        <div
+          className="absolute inset-0 pointer-events-none z-10 hidden lg:block"
+          style={{
+            transform: `translate3d(${mouseOffset.x}px, ${mouseOffset.y}px, 0px)`,
+            transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)'
+          }}
+        >
+          {/* Card 1: NIFTY 50 (Top Right) */}
+          <div className={`absolute top-[18%] right-[10%] bg-[#090d16]/75 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 ${activePhase <= 2 ? 'opacity-90 scale-100' : 'opacity-20 scale-95'}`}>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <FaChartLine className="text-emerald-400" />
+              <span className="text-gray-400">NIFTY 50</span>
+              <span className="text-white font-bold">24,320.15</span>
+              <span className="text-emerald-400 font-semibold">+1.24%</span>
+            </div>
+          </div>
+
+          {/* Card 2: BANK NIFTY (Mid Right) */}
+          <div className={`absolute top-[42%] right-[7%] bg-[#090d16]/75 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 ${activePhase >= 2 && activePhase <= 4 ? 'opacity-90 scale-100' : 'opacity-30 scale-95'}`}>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <FaChartBar className="text-amber-400" />
+              <span className="text-gray-400">BANK NIFTY</span>
+              <span className="text-white font-bold">52,140.80</span>
+              <span className="text-emerald-400 font-semibold">+0.87%</span>
+            </div>
+          </div>
+
+          {/* Card 3: MARKET SENTIMENT (Bottom Right) */}
+          <div className={`absolute bottom-[20%] right-[14%] bg-[#090d16]/75 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 ${activePhase >= 3 ? 'opacity-90 scale-100' : 'opacity-20 scale-95'}`}>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-gray-400">SENTIMENT</span>
+              <span className="text-emerald-400 font-bold uppercase">BULLISH EXPANSION</span>
+            </div>
+          </div>
+
+          {/* Card 4: VOLUME (Mid Left) */}
+          <div className={`absolute top-[55%] left-[5%] bg-[#090d16]/75 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 ${activePhase === 3 ? 'opacity-90 scale-100' : 'opacity-20 scale-95'}`}>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <FaShieldAlt className="text-sky-400" />
+              <span className="text-gray-400">VOLUME 24H</span>
+              <span className="text-white font-bold">84.2M</span>
+            </div>
           </div>
         </div>
 
-        {/* CENTER CONTENT STORYTELLING OVERLAYS (Apple-Style Composition) */}
-        <div className="relative z-10 flex-1 flex items-center px-6 sm:px-12 max-w-7xl mx-auto w-full">
+        {/* CENTER CONTENT STORYTELLING OVERLAYS (Apple-Style Split Composition) */}
+        <div className="relative z-20 flex-1 flex items-center px-6 sm:px-12 max-w-7xl mx-auto w-full">
           
           {/* PHASE 1: MASTER THE MARKET */}
           <div
@@ -87,7 +158,7 @@ export function StockMarket3DHero({ fallbackHero }) {
             }`}
           >
             <span className="text-xs font-mono uppercase tracking-[0.25em] text-amber-400 font-medium block">
-              Financial Education Reimagined
+              Financial Intelligence & Trading Mastery
             </span>
 
             <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
@@ -109,7 +180,7 @@ export function StockMarket3DHero({ fallbackHero }) {
               </Link>
               <Link
                 to="/demo-videos"
-                className="bg-white/5 border border-white/15 hover:border-amber-400/60 text-white font-semibold px-6 py-3.5 rounded-xl backdrop-blur-md flex items-center gap-2 transition duration-300 text-sm"
+                className="bg-[#090d16]/70 border border-white/15 hover:border-amber-400/60 text-white font-semibold px-6 py-3.5 rounded-xl backdrop-blur-md flex items-center gap-2 transition duration-300 text-sm"
               >
                 <FaPlay size={11} className="text-amber-400" />
                 <span>Watch Demo</span>
@@ -211,7 +282,7 @@ export function StockMarket3DHero({ fallbackHero }) {
               </Link>
               <Link
                 to="/demo-videos"
-                className="bg-white/10 border border-white/20 hover:border-amber-400/60 text-white font-bold px-7 py-4 rounded-xl backdrop-blur-md flex items-center gap-2 transition duration-300 text-sm"
+                className="bg-[#090d16]/70 border border-white/20 hover:border-amber-400/60 text-white font-bold px-7 py-4 rounded-xl backdrop-blur-md flex items-center gap-2 transition duration-300 text-sm"
               >
                 <FaPlay size={13} className="text-amber-400" />
                 <span>Watch Demo Lectures</span>
@@ -222,7 +293,7 @@ export function StockMarket3DHero({ fallbackHero }) {
         </div>
 
         {/* BOTTOM MINIMAL PROGRESS BAR */}
-        <div className="relative z-10 pb-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
+        <div className="relative z-20 pb-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex justify-between items-center text-[11px] font-mono text-gray-500 pointer-events-none">
           <span>SCROLL TO EXPLORE</span>
           <div className="flex items-center gap-1.5">
             <span className="text-amber-400 font-semibold">0{activePhase}</span>
