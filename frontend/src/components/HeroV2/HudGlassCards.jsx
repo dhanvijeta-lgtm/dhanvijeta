@@ -2,14 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaChartLine, FaChartBar, FaClock, FaChartPie } from 'react-icons/fa';
 
-export function HudGlassCards() {
-  // Live flickering ticker prices state
-  const [nifty, setNifty] = useState({ val: 24320.15, change: '+1.24%', flash: false, isUp: true });
-  const [bankNifty, setBankNifty] = useState({ val: 52140.80, change: '+0.87%', flash: false, isUp: true });
-  const [volume, setVolume] = useState({ val: '84.2M', change: '+12.65%', flash: false });
+function CountUp({ target, decimals = 2, delay = 0.5, duration = 1800 }) {
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
-    // Random live price flicker every 3.5 seconds
+    const timeout = setTimeout(() => {
+      const start = performance.now();
+      const animate = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - (1 - progress) ** 3;
+        setValue(target * eased);
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }, delay * 1000);
+    return () => clearTimeout(timeout);
+  }, [target, delay, duration]);
+
+  return (
+    <span>
+      {value.toLocaleString('en-IN', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      })}
+    </span>
+  );
+}
+
+export function HudGlassCards() {
+  const [nifty, setNifty] = useState({ val: 24320.15, change: '+1.24%', flash: false, isUp: true });
+  const [bankNifty, setBankNifty] = useState({ val: 52140.80, change: '+0.87%', flash: false, isUp: true });
+
+  useEffect(() => {
     const interval = setInterval(() => {
       const isNiftyUp = Math.random() > 0.45;
       const niftyDelta = (Math.random() * 0.85 * (isNiftyUp ? 1 : -1)).toFixed(2);
@@ -29,7 +53,6 @@ export function HudGlassCards() {
         isUp: isBankUp
       }));
 
-      // Reset flash highlight after 600ms
       setTimeout(() => {
         setNifty((p) => ({ ...p, flash: false }));
         setBankNifty((p) => ({ ...p, flash: false }));
@@ -41,8 +64,8 @@ export function HudGlassCards() {
 
   return (
     <div className="absolute inset-0 pointer-events-none z-10 hidden lg:block overflow-hidden">
-      
-      {/* TOP-RIGHT CARD 1: NIFTY 50 */}
+
+      {/* NIFTY 50 */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -57,22 +80,31 @@ export function HudGlassCards() {
           }`}
         >
           <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
-            <span className="flex items-center gap-1.5"><FaChartLine className="text-emerald-400" /> NIFTY 50</span>
+            <span className="flex items-center gap-1.5"><FaChartLine className="text-[#00FF88]" /> NIFTY 50</span>
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-white tracking-tight font-mono">{nifty.val}</span>
-            <span className={`text-xs font-semibold font-mono ${nifty.isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className="text-lg font-bold text-white tracking-tight font-mono">
+              <CountUp target={24320.15} decimals={2} delay={0.6} />
+            </span>
+            <span className={`text-xs font-semibold font-mono ${nifty.isUp ? 'text-[#00FF88]' : 'text-rose-400'}`}>
               {nifty.change}
             </span>
           </div>
-          {/* Animated Mini Sparkline */}
           <svg className="w-full h-5 mt-1" viewBox="0 0 100 25">
-            <path d="M0 20 Q 25 5, 50 15 T 100 2" fill="none" stroke="#22c55e" strokeWidth="2" />
+            <motion.path
+              d="M0 20 Q 25 5, 50 15 T 100 2"
+              fill="none"
+              stroke="#00FF88"
+              strokeWidth="2"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1.2, delay: 0.8 }}
+            />
           </svg>
         </motion.div>
       </motion.div>
 
-      {/* TOP-RIGHT CARD 2: BANK NIFTY */}
+      {/* BANK NIFTY */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,22 +119,31 @@ export function HudGlassCards() {
           }`}
         >
           <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
-            <span className="flex items-center gap-1.5"><FaChartBar className="text-emerald-400" /> BANK NIFTY</span>
+            <span className="flex items-center gap-1.5"><FaChartBar className="text-[#00FF88]" /> BANK NIFTY</span>
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-white tracking-tight font-mono">{bankNifty.val}</span>
-            <span className={`text-xs font-semibold font-mono ${bankNifty.isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className="text-lg font-bold text-white tracking-tight font-mono">
+              <CountUp target={52140.80} decimals={2} delay={0.75} />
+            </span>
+            <span className={`text-xs font-semibold font-mono ${bankNifty.isUp ? 'text-[#00FF88]' : 'text-rose-400'}`}>
               {bankNifty.change}
             </span>
           </div>
-          {/* Animated Mini Sparkline */}
           <svg className="w-full h-5 mt-1" viewBox="0 0 100 25">
-            <path d="M0 18 Q 30 22, 60 8 T 100 3" fill="none" stroke="#22c55e" strokeWidth="2" />
+            <motion.path
+              d="M0 18 Q 30 22, 60 8 T 100 3"
+              fill="none"
+              stroke="#00FF88"
+              strokeWidth="2"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1.2, delay: 0.95 }}
+            />
           </svg>
         </motion.div>
       </motion.div>
 
-      {/* TOP-RIGHT CARD 3: MARKET SENTIMENT */}
+      {/* MARKET SENTIMENT */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,14 +159,14 @@ export function HudGlassCards() {
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🐂</span>
             <div>
-              <span className="text-sm font-extrabold text-emerald-400 tracking-wide block">BULLISH</span>
+              <span className="text-sm font-extrabold text-[#00FF88] tracking-wide block">BULLISH</span>
               <span className="text-[10px] text-gray-400 font-mono block">EXPANSION PHASE</span>
             </div>
           </div>
         </motion.div>
       </motion.div>
 
-      {/* BOTTOM-LEFT CARD 1: VOLUME */}
+      {/* VOLUME */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -137,18 +178,18 @@ export function HudGlassCards() {
           transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
           className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
         >
-          <div className="p-2.5 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-400">
+          <div className="p-2.5 bg-[#FF9F00]/10 rounded-lg border border-[#FF9F00]/20 text-[#FF9F00]">
             <FaChartBar size={16} />
           </div>
           <div>
             <span className="text-[10px] font-mono text-gray-400 uppercase block">VOLUME</span>
-            <span className="text-base font-extrabold text-white font-mono">{volume.val}</span>
-            <span className="text-[10px] text-emerald-400 font-mono block">{volume.change}</span>
+            <span className="text-base font-extrabold text-white font-mono">84.2M</span>
+            <span className="text-[10px] text-[#00FF88] font-mono block">+12.65%</span>
           </div>
         </motion.div>
       </motion.div>
 
-      {/* BOTTOM-LEFT CARD 2: 52W HIGH */}
+      {/* 52W HIGH */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -160,18 +201,20 @@ export function HudGlassCards() {
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
           className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
         >
-          <div className="p-2.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-400">
+          <div className="p-2.5 bg-[#00FF88]/10 rounded-lg border border-[#00FF88]/20 text-[#00FF88]">
             <FaClock size={16} />
           </div>
           <div>
             <span className="text-[10px] font-mono text-gray-400 uppercase block">52W HIGH</span>
-            <span className="text-base font-extrabold text-white font-mono">25,148.30</span>
-            <span className="text-[10px] text-emerald-400 font-mono block">+2.18%</span>
+            <span className="text-base font-extrabold text-white font-mono">
+              <CountUp target={25148.30} decimals={2} delay={1.0} />
+            </span>
+            <span className="text-[10px] text-[#00FF88] font-mono block">+2.18%</span>
           </div>
         </motion.div>
       </motion.div>
 
-      {/* BOTTOM-LEFT CARD 3: ADVANCES (CIRCULAR PROGRESS RING) */}
+      {/* ADVANCES */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -183,7 +226,6 @@ export function HudGlassCards() {
           transition={{ duration: 6.8, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
           className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
         >
-          {/* Animated Circular Progress Ring */}
           <div className="relative w-10 h-10 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
               <path
@@ -195,7 +237,7 @@ export function HudGlassCards() {
               <motion.path
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
-                stroke="#22d3ee"
+                stroke="#00E5FF"
                 strokeWidth="3"
                 strokeDasharray="100, 100"
                 initial={{ strokeDashoffset: 100 }}
@@ -203,11 +245,11 @@ export function HudGlassCards() {
                 transition={{ duration: 1.8, delay: 1.2, ease: 'easeOut' }}
               />
             </svg>
-            <span className="absolute text-[10px] font-bold text-teal-400 font-mono">78%</span>
+            <span className="absolute text-[10px] font-bold text-[#00E5FF] font-mono">78%</span>
           </div>
           <div>
             <span className="text-[10px] font-mono text-gray-400 uppercase block">ADVANCES</span>
-            <span className="text-sm font-extrabold text-emerald-400 font-mono">78%</span>
+            <span className="text-sm font-extrabold text-[#00FF88] font-mono">78%</span>
             <span className="text-[10px] text-gray-400 font-mono block">MARKET DEPTH</span>
           </div>
         </motion.div>

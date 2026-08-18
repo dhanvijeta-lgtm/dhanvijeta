@@ -34,6 +34,7 @@ const queryClient = new QueryClient();
 function LayoutWrapper() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const location = useLocation();
+  const isHome = location.pathname === '/';
 
   // Watch for auth redirects redirecting with state openLogin
   useEffect(() => {
@@ -45,8 +46,8 @@ function LayoutWrapper() {
 
   return (
     <div className="flex flex-col min-h-screen bg-finance-dark text-white relative">
-      {/* 3D background canvas */}
-      <AnimatedBackground />
+      {/* 3D background canvas — hidden on home (HeroV2 has its own scene) */}
+      {!isHome && <AnimatedBackground />}
 
       <Navbar onOpenLogin={() => setIsLoginOpen(true)} />
       
