@@ -55,13 +55,26 @@ export function VideoPlayer({ src, provider, fileId, poster, onTimeUpdate, onEnd
 
   if (embedUrl) {
     return (
-      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.2)] border border-white/10">
+      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.2)] border border-white/10 group">
         <iframe
           src={embedUrl}
           title="Lesson Video Player"
           className="w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
+        />
+        {/* TOP RIGHT POP-OUT PROTECTIVE SHIELD BLOCKER */}
+        <div
+          className="absolute top-0 right-0 w-24 h-16 z-30 pointer-events-auto bg-transparent cursor-default select-none"
+          title="Direct link disabled for security"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         />
       </div>
     );

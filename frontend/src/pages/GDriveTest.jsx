@@ -53,6 +53,19 @@ export function GDriveTest() {
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
         />
+        {/* TOP RIGHT POP-OUT PROTECTIVE SHIELD BLOCKER */}
+        <div
+          className="absolute top-0 right-0 w-24 h-16 z-30 pointer-events-auto bg-transparent cursor-default select-none"
+          title="Direct link disabled for security"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
       </div>
 
       {/* VERIFICATION CHECKLIST */}
