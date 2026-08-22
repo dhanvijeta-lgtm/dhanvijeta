@@ -21,7 +21,8 @@ const paymentSchema = new mongoose.Schema(
       index: true
     },
     paymentId: {
-      type: String
+      type: String,
+      index: true
     },
     signature: {
       type: String
@@ -39,13 +40,16 @@ const paymentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['created', 'captured', 'failed'],
-      default: 'created'
+      enum: ['created', 'pending', 'captured', 'failed', 'cancelled', 'refunded'],
+      default: 'created',
+      index: true
     }
   },
   {
     timestamps: true
   }
 );
+
+paymentSchema.index({ userId: 1, courseId: 1, status: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

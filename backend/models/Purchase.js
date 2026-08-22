@@ -21,8 +21,9 @@ const purchaseSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'completed', 'failed'],
-      default: 'pending'
+      enum: ['pending', 'completed', 'failed', 'revoked'],
+      default: 'pending',
+      index: true
     },
     purchaseDate: {
       type: Date
@@ -33,7 +34,7 @@ const purchaseSchema = new mongoose.Schema(
     progress: {
       completedLessons: [
         {
-          type: String // We will store Lesson ID strings here
+          type: String // Lesson ID strings
         }
       ]
     },

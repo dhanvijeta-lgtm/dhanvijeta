@@ -13,31 +13,53 @@ if (!useMockPayment && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_S
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
   });
-  console.log('Razorpay Gateway initialized.');
+  console.log('Razorpay Gateway initialized in LIVE/TEST API mode.');
 } else {
-  console.log('Payment Mode: Mock Payments Enabled.');
+  console.log('Payment Mode: Mock/Test Payments Enabled.');
 }
 
+/**
+ * Creates a Razorpay Order strictly using the MongoDB Course price.
+ * Rejects duplicate enrollments.
+ */
 const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
-  const course = await Course.findById(courseId);
-  if (!course) {
-    throw new Error('Course not found');
+  // 1. Duplicate purchase check
+  const existingPurchase = await Purchase.findOne({
+    userId,
+    courseId,
+    paymentStatus: 'completed'
+  });
+
+  if (existingPurchase) {
+    const error = new Error('You are already enrolled in this course.');
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Calculate base price
+  // 2. Fetch official Course record from DB (NEVER trust frontend price)
+  const course = await Course.findById(courseId);
+  if (!course) {
+    const error = new Error('Course not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // 3. Calculate base price from DB
   let finalPrice = course.price;
   if (course.discount > 0) {
     finalPrice = finalPrice - (finalPrice * (course.discount / 100));
   }
 
-  // Check Coupon
+  // 4. Server-side coupon verification
   let appliedCoupon = null;
   if (couponCode) {
     const coupon = await Coupon.findOne({ couponCode: couponCode.toUpperCase() });
     if (!coupon || !coupon.isValid()) {
-      throw new Error('Invalid or expired coupon code');
+      const error = new Error('Invalid or expired coupon code');
+      error.statusCode = 400;
+      throw error;
     }
-    
+
     if (coupon.discountType === 'Flat') {
       finalPrice = Math.max(0, finalPrice - coupon.discountValue);
     } else if (coupon.discountType === 'Percentage') {
@@ -46,14 +68,12 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
     appliedCoupon = coupon;
   }
 
-  let orderId;
-  let receiptId = `rcpt_${userId.toString().slice(-4)}_${courseId.toString().slice(-4)}_${Date.now().toString().slice(-4)}`;
+  const receiptId = `rcpt_${userId.toString().slice(-4)}_${courseId.toString().slice(-4)}_${Date.now().toString().slice(-4)}`;
 
-  // Handle Free Courses (price === 0 or 100% discount)
+  // 5. Free course auto-enrollment
   if (finalPrice <= 0) {
     const freeOrderId = `free_order_${crypto.randomBytes(8).toString('hex')}`;
     
-    // Create captured payment record for free access
     const payment = await Payment.create({
       userId,
       courseId,
@@ -64,7 +84,6 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
       status: 'captured'
     });
 
-    // Auto-grant full purchase batch access
     const purchase = await Purchase.findOneAndUpdate(
       { userId, courseId },
       {
@@ -89,28 +108,34 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
     };
   }
 
+  // 6. Paid course Razorpay order creation
+  let orderId;
   if (useMockPayment) {
-    // Generate a mock order ID
     orderId = `mock_order_${crypto.randomBytes(8).toString('hex')}`;
   } else {
     if (!razorpayInstance) {
       throw new Error('Razorpay client not configured and mock payment is disabled.');
     }
     const options = {
-      amount: Math.round(finalPrice * 100), // Razorpay accepts amounts in Paisa
+      amount: Math.round(finalPrice * 100), // Amount in Paisa
       currency: 'INR',
-      receipt: receiptId
+      receipt: receiptId,
+      notes: {
+        userId: userId.toString(),
+        courseId: courseId.toString()
+      }
     };
     const order = await razorpayInstance.orders.create(options);
     orderId = order.id;
   }
 
-  // Record a payment entry in pending state
-  const payment = await Payment.create({
+  // Record pending payment entry in database
+  await Payment.create({
     userId,
     courseId,
     orderId,
     amount: finalPrice,
+    currency: 'INR',
     couponApplied: appliedCoupon ? appliedCoupon.couponCode : null,
     status: 'created'
   });
@@ -125,12 +150,23 @@ const createCheckoutOrder = async (userId, courseId, couponCode = null) => {
   };
 };
 
+/**
+ * Server-side payment verification & signature validation
+ */
 const verifyCheckoutPayment = async (userId, verificationData) => {
   const { orderId, paymentId, signature } = verificationData;
 
   const payment = await Payment.findOne({ orderId, userId });
   if (!payment) {
-    throw new Error('Transaction details not found');
+    const error = new Error('Transaction record not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Idempotent retry check
+  if (payment.status === 'captured') {
+    const existingPurchase = await Purchase.findOne({ userId, courseId: payment.courseId });
+    return { payment, purchase: existingPurchase };
   }
 
   let verified = false;
@@ -138,8 +174,8 @@ const verifyCheckoutPayment = async (userId, verificationData) => {
   if (useMockPayment) {
     verified = true;
   } else {
-    if (!razorpayInstance) {
-      throw new Error('Razorpay client not configured.');
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      throw new Error('Razorpay Key Secret is missing in environment.');
     }
     const body = orderId + '|' + paymentId;
     const expectedSignature = crypto
@@ -153,16 +189,18 @@ const verifyCheckoutPayment = async (userId, verificationData) => {
   if (!verified) {
     payment.status = 'failed';
     await payment.save();
-    throw new Error('Payment signature verification failed');
+    const error = new Error('Payment signature verification failed. Access denied.');
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Update payment logs
+  // Update payment status to captured
   payment.paymentId = paymentId || `mock_pay_${crypto.randomBytes(8).toString('hex')}`;
   payment.signature = signature || `mock_sig_${crypto.randomBytes(12).toString('hex')}`;
   payment.status = 'captured';
   await payment.save();
 
-  // If coupon was applied, increment usage count
+  // Increment coupon usage count if applicable
   if (payment.couponApplied) {
     const coupon = await Coupon.findOne({ couponCode: payment.couponApplied });
     if (coupon) {
@@ -171,14 +209,13 @@ const verifyCheckoutPayment = async (userId, verificationData) => {
     }
   }
 
-  // Upsert corresponding Course purchase access mapping
+  // Grant active course enrollment
   const purchase = await Purchase.findOneAndUpdate(
     { userId, courseId: payment.courseId },
     {
       paymentId: payment._id,
       paymentStatus: 'completed',
       purchaseDate: new Date(),
-      // Auto-unlock
       $setOnInsert: {
         progress: { completedLessons: [] },
         completionPercentage: 0,
@@ -192,7 +229,99 @@ const verifyCheckoutPayment = async (userId, verificationData) => {
   return { payment, purchase };
 };
 
+/**
+ * Handles user closing Razorpay checkout window
+ */
+const cancelCheckoutPayment = async (userId, orderId) => {
+  const payment = await Payment.findOne({ orderId, userId, status: 'created' });
+  if (payment) {
+    payment.status = 'cancelled';
+    await payment.save();
+  }
+  return { success: true, message: 'Payment marked as cancelled' };
+};
+
+/**
+ * Razorpay Webhook Signature Verification & Idempotent Reconciliation
+ */
+const processWebhookEvent = async (rawBody, signature, event) => {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+  if (secret && signature) {
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody)
+      .digest('hex');
+
+    if (expectedSignature !== signature) {
+      const error = new Error('Webhook signature verification failed');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  // Process payment.captured or order.paid
+  if (event.event === 'payment.captured' || event.event === 'order.paid') {
+    const entity = event.payload?.payment?.entity || event.payload?.order?.entity;
+    if (!entity) return { processed: false };
+
+    const orderId = entity.order_id || entity.id;
+    const paymentId = entity.id;
+
+    const payment = await Payment.findOne({ orderId });
+    if (payment && payment.status !== 'captured') {
+      payment.paymentId = paymentId;
+      payment.status = 'captured';
+      await payment.save();
+
+      await Purchase.findOneAndUpdate(
+        { userId: payment.userId, courseId: payment.courseId },
+        {
+          paymentId: payment._id,
+          paymentStatus: 'completed',
+          purchaseDate: new Date(),
+          $setOnInsert: {
+            progress: { completedLessons: [] },
+            completionPercentage: 0,
+            hoursWatched: 0,
+            certificateIssued: false
+          }
+        },
+        { upsert: true, new: true }
+      );
+
+      return { processed: true, reconciled: true };
+    }
+  }
+
+  return { processed: true, reconciled: false };
+};
+
+/**
+ * Refund Payment & Revoke Access (Admin Flow)
+ */
+const refundPayment = async (paymentId) => {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) {
+    const error = new Error('Payment not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  payment.status = 'refunded';
+  await payment.save();
+
+  await Purchase.findOneAndUpdate(
+    { userId: payment.userId, courseId: payment.courseId },
+    { paymentStatus: 'revoked' }
+  );
+
+  return { success: true, message: 'Payment refunded and course access revoked successfully' };
+};
+
 module.exports = {
   createCheckoutOrder,
-  verifyCheckoutPayment
+  verifyCheckoutPayment,
+  cancelCheckoutPayment,
+  processWebhookEvent,
+  refundPayment
 };

@@ -154,12 +154,22 @@ export function CourseDetails({ onOpenLogin }) {
               toast.success('Payment verified successfully! Welcome to your Batch.');
               navigate(`/my-batch/${course._id}`);
             } catch (err) {
-              toast.error('Signature verification failed.');
+              toast.error(err.response?.data?.message || 'Signature verification failed.');
+            }
+          },
+          modal: {
+            ondismiss: async function () {
+              try {
+                await client.post('/payments/cancel', { orderId: orderData.orderId });
+              } catch (e) {
+                // Silent catch
+              }
+              toast.error('Payment cancelled.');
             }
           },
           prefill: {
-            name: user.name,
-            email: user.email
+            name: user?.name || '',
+            email: user?.email || ''
           },
           theme: {
             color: '#ffd700'
@@ -167,6 +177,9 @@ export function CourseDetails({ onOpenLogin }) {
         };
 
         const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          toast.error(`Payment failed: ${response.error?.description || 'Transaction unsuccessful'}`);
+        });
         rzp.open();
       }
     } catch (err) {
