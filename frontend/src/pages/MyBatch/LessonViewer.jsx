@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
+import formatDuration from '../../utils/formatDuration';
 import {
   FaChevronDown,
   FaChevronUp,
@@ -420,9 +421,11 @@ export function LessonViewer() {
                                   FREE
                                 </span>
                               )}
-                              <span className="text-[10px] text-gray-500 font-mono">
-                                {Math.round(lesson.videoDuration / 60)}m
-                              </span>
+                              {formatDuration(lesson.videoDuration) && (
+                                <span className="text-[10px] text-gray-500 font-mono">
+                                  {formatDuration(lesson.videoDuration)}
+                                </span>
+                              )}
                             </div>
                           </div>
                         );

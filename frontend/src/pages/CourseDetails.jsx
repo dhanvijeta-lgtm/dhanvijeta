@@ -5,6 +5,7 @@ import client from '../api/client';
 import { useAuth } from '../store/authContext';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import CheckoutModal from '../components/CheckoutModal/CheckoutModal';
+import formatDuration from '../utils/formatDuration';
 import {
   FaRegClock,
   FaStar,
@@ -280,9 +281,11 @@ export function CourseDetails({ onOpenLogin }) {
                                 UNLOCKED
                               </span>
                             )}
-                            <span className="text-gray-500 font-mono text-xs">
-                              {Math.round(lesson.videoDuration / 60)}m
-                            </span>
+                            {formatDuration(lesson.videoDuration) && (
+                              <span className="text-gray-500 font-mono text-xs">
+                                {formatDuration(lesson.videoDuration)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );

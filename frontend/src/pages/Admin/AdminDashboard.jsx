@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../../api/client';
+import formatDuration from '../../utils/formatDuration';
 import {
   FaWallet,
   FaUsers,
@@ -268,7 +269,7 @@ export function AdminDashboard() {
       } else {
         setNewLessonVideoUrl(videoUrl);
         setNewLessonVideoPublicId(videoPublicId);
-        setNewLessonVideoDuration(videoDuration || 600);
+        setNewLessonVideoDuration(videoDuration || 0);
         setNewLessonVideoSize(videoSize);
         setNewLessonVideoFormat(videoFormat);
         if (thumbnail && !newLessonThumbnail) setNewLessonThumbnail(thumbnail);
@@ -979,6 +980,20 @@ export function AdminDashboard() {
                           />
                         </div>
                       )}
+
+                      {/* VIDEO DURATION INPUT (IN MINUTES) */}
+                      <div className="pt-2">
+                        <label className="text-xs text-amber-300 font-bold block mb-1">
+                          Video Duration (in Minutes)
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="E.g. 15 for 15 minutes, 45 for 45 mins"
+                          value={newLessonVideoDuration ? Math.round(newLessonVideoDuration / 60) : ''}
+                          onChange={(e) => setNewLessonVideoDuration(Number(e.target.value) * 60)}
+                          className="w-full bg-white/5 border border-amber-500/20 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
+                        />
+                      </div>
                     </div>
 
                     {/* FREE PREVIEW CHECKBOX */}
@@ -1176,7 +1191,7 @@ export function AdminDashboard() {
                                     <div className="truncate">
                                       <span className="font-semibold text-white block truncate">{les.title}</span>
                                       <span className="text-[10px] text-gray-500 font-mono">
-                                        {Math.round(les.videoDuration / 60)}m | {les.videoFormat || 'mp4'}
+                                        {formatDuration(les.videoDuration) || '0m'} | {les.videoFormat || 'mp4'}
                                       </span>
                                     </div>
                                   </div>
@@ -1679,6 +1694,20 @@ export function AdminDashboard() {
                     />
                   </div>
                 )}
+
+                {/* EDIT VIDEO DURATION INPUT (IN MINUTES) */}
+                <div className="pt-2">
+                  <label className="text-xs text-amber-300 font-bold block mb-1">
+                    Video Duration (in Minutes)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="E.g. 15 for 15 minutes, 45 for 45 mins"
+                    value={editVideoDuration ? Math.round(editVideoDuration / 60) : ''}
+                    onChange={(e) => setEditVideoDuration(Number(e.target.value) * 60)}
+                    className="w-full bg-white/5 border border-amber-500/20 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
+                  />
+                </div>
               </div>
 
               {/* FREE PREVIEW CHECKBOX */}
