@@ -30,6 +30,7 @@ import LessonViewer from './pages/MyBatch/LessonViewer';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
+import GDriveTest from './pages/GDriveTest';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ function LayoutWrapper() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/blog" element={<BlogList />} />
             <Route path="/blog/:slug" element={<BlogDetails />} />
+            <Route path="/gdrive-test" element={<GDriveTest />} />
 
             {/* Auth Flow Pages */}
             <Route path="/verify-email" element={<VerifyEmail />} />
