@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
-const { protect } = require('../middleware/auth');
+const { protect, optionalAuth } = require('../middleware/auth');
 const { authorize } = require('../middleware/role');
 
 // Public routes
 router.get('/', courseController.getCourses);
 router.get('/:slug', courseController.getCourse);
+
+// Authorized Lesson Video route (Optional auth allows preview playback for guests, demands enrollment for paid)
+router.get('/:courseId/lessons/:lessonId/video', optionalAuth, courseController.getLessonVideo);
 
 // Admin-only course management routes
 router.post('/', protect, authorize('admin'), courseController.createCourse);

@@ -1,6 +1,7 @@
 const Course = require('../models/Course');
 const response = require('../helpers/response');
 const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
+const videoService = require('../services/videoService');
 
 /**
  * Cloudinary asset destruction helper
@@ -64,11 +65,14 @@ const getCourse = async (req, res, next) => {
         _id: lesson._id,
         title: lesson.title,
         description: lesson.description,
+        videoProvider: lesson.videoProvider || (lesson.googleDriveFileId ? 'google-drive' : 'external'),
+        googleDriveFileId: lesson.googleDriveFileId || '',
         videoUrl: lesson.videoUrl || '',
         videoDuration: lesson.videoDuration,
         videoSize: lesson.videoSize,
         videoFormat: lesson.videoFormat,
-        thumbnail: lesson.thumbnail || ''
+        thumbnail: lesson.thumbnail || '',
+        isPreview: !!lesson.isPreview
       }))
     }));
 
@@ -220,6 +224,9 @@ const addLesson = async (req, res, next) => {
     const {
       title,
       description,
+      videoProvider,
+      googleDriveFileId,
+      googleDriveUrl,
       videoUrl,
       videoLink,
       videoPublicId,
@@ -229,7 +236,9 @@ const addLesson = async (req, res, next) => {
       thumbnail,
       thumbnailPublicId,
       pdfUrl,
-      assignment
+      assignment,
+      isPreview,
+      order
     } = req.body;
 
     const course = await Course.findById(id);
@@ -242,9 +251,19 @@ const addLesson = async (req, res, next) => {
       return response.error(res, 'Section not found', 404);
     }
 
+    const rawDriveInput = googleDriveFileId || googleDriveUrl || videoUrl || videoLink || '';
+    const cleanDriveId = videoService.extractGoogleDriveFileId(rawDriveInput);
+    const resolvedProvider = videoProvider || (cleanDriveId ? 'google-drive' : 'external');
+
+    if (resolvedProvider === 'google-drive' && !cleanDriveId) {
+      return response.error(res, 'Invalid Google Drive video URL or File ID provided.', 400);
+    }
+
     section.lessons.push({
       title,
       description: description || '',
+      videoProvider: resolvedProvider,
+      googleDriveFileId: cleanDriveId,
       videoUrl: videoUrl || videoLink || '',
       videoPublicId: videoPublicId || '',
       videoDuration: Number(videoDuration) || 0,
@@ -253,7 +272,9 @@ const addLesson = async (req, res, next) => {
       thumbnail: thumbnail || '',
       thumbnailPublicId: thumbnailPublicId || '',
       pdfUrl: pdfUrl || '',
-      assignment: assignment || ''
+      assignment: assignment || '',
+      isPreview: !!isPreview,
+      order: Number(order) || 0
     });
 
     await course.save();
@@ -294,7 +315,21 @@ const updateLesson = async (req, res, next) => {
       await destroyCloudinaryAsset(lesson.thumbnailPublicId, 'image');
     }
 
-    // Apply updates
+    // Handle Google Drive extraction
+    if (updates.googleDriveFileId !== undefined || updates.googleDriveUrl !== undefined || updates.videoUrl !== undefined) {
+      const rawInput = updates.googleDriveFileId || updates.googleDriveUrl || updates.videoUrl || lesson.googleDriveFileId || '';
+      const cleanDriveId = videoService.extractGoogleDriveFileId(rawInput);
+      if (cleanDriveId) {
+        lesson.googleDriveFileId = cleanDriveId;
+      }
+    }
+
+    if (updates.videoProvider !== undefined) {
+      lesson.videoProvider = updates.videoProvider;
+    } else if (lesson.googleDriveFileId && !lesson.videoProvider) {
+      lesson.videoProvider = 'google-drive';
+    }
+
     if (updates.title !== undefined) lesson.title = updates.title;
     if (updates.description !== undefined) lesson.description = updates.description;
     if (updates.videoUrl !== undefined) lesson.videoUrl = updates.videoUrl;
@@ -306,6 +341,8 @@ const updateLesson = async (req, res, next) => {
     if (updates.thumbnailPublicId !== undefined) lesson.thumbnailPublicId = updates.thumbnailPublicId;
     if (updates.pdfUrl !== undefined) lesson.pdfUrl = updates.pdfUrl;
     if (updates.assignment !== undefined) lesson.assignment = updates.assignment;
+    if (updates.isPreview !== undefined) lesson.isPreview = !!updates.isPreview;
+    if (updates.order !== undefined) lesson.order = Number(updates.order);
 
     await course.save();
     return response.success(res, course, 'Lesson updated successfully');
@@ -351,6 +388,86 @@ const deleteLesson = async (req, res, next) => {
   }
 };
 
+// GET /api/courses/:courseId/lessons/:lessonId/video (Secure Authorization Endpoint)
+const getLessonVideo = async (req, res, next) => {
+  try {
+    const { courseId, lessonId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return response.error(res, 'Course not found', 404);
+    }
+
+    // Find target lesson across course sections
+    let foundLesson = null;
+    for (const section of course.sections) {
+      const match = section.lessons.id(lessonId);
+      if (match) {
+        foundLesson = match;
+        break;
+      }
+    }
+
+    if (!foundLesson) {
+      return response.error(res, 'Lesson not found in this course', 404);
+    }
+
+    // 1. If lesson is marked as Free Preview -> Allow access immediately
+    if (foundLesson.isPreview) {
+      const videoInfo = videoService.getVideoEmbedInfo(foundLesson);
+      return response.success(res, {
+        title: foundLesson.title,
+        description: foundLesson.description,
+        pdfUrl: foundLesson.pdfUrl,
+        assignment: foundLesson.assignment,
+        ...videoInfo
+      }, 'Free preview lesson details fetched successfully');
+    }
+
+    // 2. If not preview -> Require authentication
+    if (!req.user) {
+      return response.error(res, 'Not authorized, please sign in to watch full lesson content.', 401);
+    }
+
+    // 3. Admin bypass
+    if (req.user.role === 'admin') {
+      const videoInfo = videoService.getVideoEmbedInfo(foundLesson);
+      return response.success(res, {
+        title: foundLesson.title,
+        description: foundLesson.description,
+        pdfUrl: foundLesson.pdfUrl,
+        assignment: foundLesson.assignment,
+        ...videoInfo
+      }, 'Admin authorized lesson video details fetched');
+    }
+
+    // 4. Verify user purchase/enrollment
+    const Purchase = require('../models/Purchase');
+    const purchase = await Purchase.findOne({
+      userId: req.user.id,
+      courseId,
+      paymentStatus: 'completed'
+    });
+
+    const isFreeCourse = course.price === 0 || course.discount === 100;
+
+    if (!purchase && !isFreeCourse) {
+      return response.error(res, 'Course not purchased. Please enroll to unlock full video access.', 403);
+    }
+
+    const videoInfo = videoService.getVideoEmbedInfo(foundLesson);
+    return response.success(res, {
+      title: foundLesson.title,
+      description: foundLesson.description,
+      pdfUrl: foundLesson.pdfUrl,
+      assignment: foundLesson.assignment,
+      ...videoInfo
+    }, 'Authorized lesson video details fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCourses,
   getCourse,
@@ -360,5 +477,6 @@ module.exports = {
   addSection,
   addLesson,
   updateLesson,
-  deleteLesson
+  deleteLesson,
+  getLessonVideo
 };

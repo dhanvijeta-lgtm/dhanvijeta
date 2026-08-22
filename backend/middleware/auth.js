@@ -20,11 +20,29 @@ const protect = async (req, res, next) => {
       next();
     } catch (error) {
       console.error('JWT auth error:', error.message);
-      res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   } else {
-    res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
+    return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
   }
 };
 
-module.exports = { protect };
+const optionalAuth = async (req, res, next) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwtaccesskey12345');
+      req.user = await User.findById(decoded.id).select('-password');
+    } catch (error) {
+      req.user = null;
+    }
+  } else {
+    req.user = null;
+  }
+  next();
+};
+
+module.exports = { protect, optionalAuth };

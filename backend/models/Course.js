@@ -8,7 +8,17 @@ const lessonSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
+  },
+  videoProvider: {
+    type: String,
+    enum: ['google-drive', 'external', 'cloudinary', 'none'],
+    default: 'external'
+  },
+  googleDriveFileId: {
+    type: String,
+    default: ''
   },
   videoUrl: {
     type: String, // Direct video URL, YouTube link, Vimeo link, Google Drive link, etc.
@@ -45,6 +55,14 @@ const lessonSchema = new mongoose.Schema({
   assignment: {
     type: String, // Assignment text or document URL
     default: ''
+  },
+  isPreview: {
+    type: Boolean,
+    default: false
+  },
+  order: {
+    type: Number,
+    default: 0
   },
   quiz: {
     questions: [

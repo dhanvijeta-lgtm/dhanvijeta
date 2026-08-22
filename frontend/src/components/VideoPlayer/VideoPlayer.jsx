@@ -1,9 +1,22 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { FaPlay, FaPause, FaVolumeMute, FaVolumeUp, FaExpand, FaCog } from 'react-icons/fa';
 
-const getEmbedUrl = (url) => {
+const getEmbedUrl = (url, provider, fileId) => {
+  if (provider === 'google-drive' || fileId) {
+    const cleanId = fileId || (url ? String(url).match(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,100})/)?.[1] : null);
+    if (cleanId) {
+      return `https://drive.google.com/file/d/${cleanId}/preview`;
+    }
+  }
+
   if (!url) return null;
   const strUrl = String(url).trim();
+
+  // Google Drive URL match
+  const driveMatch = strUrl.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|\/d\/)|file\/d\/)([a-zA-Z0-9_-]{25,100})/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  }
 
   // YouTube match
   const ytMatch = strUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
@@ -20,7 +33,7 @@ const getEmbedUrl = (url) => {
   return null;
 };
 
-export function VideoPlayer({ src, poster, onTimeUpdate, onEnded }) {
+export function VideoPlayer({ src, provider, fileId, poster, onTimeUpdate, onEnded }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -30,7 +43,7 @@ export function VideoPlayer({ src, poster, onTimeUpdate, onEnded }) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
 
-  const embedUrl = getEmbedUrl(src);
+  const embedUrl = getEmbedUrl(src, provider, fileId);
 
   useEffect(() => {
     setIsPlaying(false);
@@ -42,7 +55,7 @@ export function VideoPlayer({ src, poster, onTimeUpdate, onEnded }) {
 
   if (embedUrl) {
     return (
-      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-emerald-glow border border-white/10">
+      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.2)] border border-white/10">
         <iframe
           src={embedUrl}
           title="Lesson Video Player"

@@ -70,6 +70,8 @@ export function AdminDashboard() {
   const [selectedSectionForLesson, setSelectedSectionForLesson] = useState('');
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [newLessonDesc, setNewLessonDesc] = useState('');
+  const [newLessonProvider, setNewLessonProvider] = useState('google-drive');
+  const [newLessonDriveInput, setNewLessonDriveInput] = useState('');
   const [newLessonVideoUrl, setNewLessonVideoUrl] = useState('');
   const [newLessonVideoPublicId, setNewLessonVideoPublicId] = useState('');
   const [newLessonVideoDuration, setNewLessonVideoDuration] = useState('600');
@@ -79,6 +81,7 @@ export function AdminDashboard() {
   const [newLessonThumbnailPublicId, setNewLessonThumbnailPublicId] = useState('');
   const [newLessonPdfUrl, setNewLessonPdfUrl] = useState('');
   const [newLessonAssignment, setNewLessonAssignment] = useState('');
+  const [newLessonIsPreview, setNewLessonIsPreview] = useState(false);
 
   // Upload States for New Lesson
   const [uploadingLessonVideo, setUploadingLessonVideo] = useState(false);
@@ -90,6 +93,8 @@ export function AdminDashboard() {
   const [editingLesson, setEditingLesson] = useState(null); // { courseId, sectionId, lesson }
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editProvider, setEditProvider] = useState('google-drive');
+  const [editDriveInput, setEditDriveInput] = useState('');
   const [editVideoUrl, setEditVideoUrl] = useState('');
   const [editVideoPublicId, setEditVideoPublicId] = useState('');
   const [editVideoDuration, setEditVideoDuration] = useState(0);
@@ -99,6 +104,7 @@ export function AdminDashboard() {
   const [editThumbnailPublicId, setEditThumbnailPublicId] = useState('');
   const [editPdfUrl, setEditPdfUrl] = useState('');
   const [editAssignment, setEditAssignment] = useState('');
+  const [editIsPreview, setEditIsPreview] = useState(false);
 
   // Upload States for Edit Lesson
   const [uploadingEditVideo, setUploadingEditVideo] = useState(false);
@@ -518,6 +524,9 @@ export function AdminDashboard() {
       payload: {
         title: newLessonTitle,
         description: newLessonDesc,
+        videoProvider: newLessonProvider,
+        googleDriveFileId: newLessonProvider === 'google-drive' ? newLessonDriveInput : '',
+        googleDriveUrl: newLessonProvider === 'google-drive' ? newLessonDriveInput : '',
         videoUrl: newLessonVideoUrl,
         videoPublicId: newLessonVideoPublicId,
         videoDuration: Number(newLessonVideoDuration),
@@ -526,7 +535,8 @@ export function AdminDashboard() {
         thumbnail: newLessonThumbnail,
         thumbnailPublicId: newLessonThumbnailPublicId,
         pdfUrl: newLessonPdfUrl,
-        assignment: newLessonAssignment
+        assignment: newLessonAssignment,
+        isPreview: newLessonIsPreview
       }
     });
   };
@@ -535,6 +545,8 @@ export function AdminDashboard() {
     setEditingLesson({ courseId, sectionId, lessonId: lesson._id });
     setEditTitle(lesson.title || '');
     setEditDesc(lesson.description || '');
+    setEditProvider(lesson.videoProvider || (lesson.googleDriveFileId ? 'google-drive' : 'external'));
+    setEditDriveInput(lesson.googleDriveFileId || '');
     setEditVideoUrl(lesson.videoUrl || '');
     setEditVideoPublicId(lesson.videoPublicId || '');
     setEditVideoDuration(lesson.videoDuration || 0);
@@ -544,6 +556,7 @@ export function AdminDashboard() {
     setEditThumbnailPublicId(lesson.thumbnailPublicId || '');
     setEditPdfUrl(lesson.pdfUrl || '');
     setEditAssignment(lesson.assignment || '');
+    setEditIsPreview(!!lesson.isPreview);
   };
 
   const handleSaveEditLesson = (e) => {
@@ -557,6 +570,9 @@ export function AdminDashboard() {
       payload: {
         title: editTitle,
         description: editDesc,
+        videoProvider: editProvider,
+        googleDriveFileId: editProvider === 'google-drive' ? editDriveInput : '',
+        googleDriveUrl: editProvider === 'google-drive' ? editDriveInput : '',
         videoUrl: editVideoUrl,
         videoPublicId: editVideoPublicId,
         videoDuration: Number(editVideoDuration),
@@ -565,7 +581,8 @@ export function AdminDashboard() {
         thumbnail: editThumbnail,
         thumbnailPublicId: editThumbnailPublicId,
         pdfUrl: editPdfUrl,
-        assignment: editAssignment
+        assignment: editAssignment,
+        isPreview: editIsPreview
       }
     });
   };
@@ -884,67 +901,98 @@ export function AdminDashboard() {
                       />
                     </div>
 
-                    {/* DIRECT CLOUDINARY VIDEO UPLOAD & PREVIEW */}
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
-                      <label className="text-amber-300 font-bold flex items-center gap-1.5">
-                        <FaVideo /> Video File Upload (MP4, MOV, AVI, MKV, WEBM)
-                      </label>
-                      
-                      <div className="flex flex-col gap-2">
-                        <input
-                          type="file"
-                          accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
-                          onChange={(e) => handleUploadVideoFile(e, false)}
-                          disabled={uploadingLessonVideo}
-                          className="hidden"
-                          id="new-lesson-video-file"
-                        />
-                        <label
-                          htmlFor="new-lesson-video-file"
-                          className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
-                        >
-                          {uploadingLessonVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
-                          <span>{uploadingLessonVideo ? `Uploading Video... ${lessonVideoProgress}%` : 'Upload Video File to Cloudinary'}</span>
+                    {/* VIDEO PROVIDER & GOOGLE DRIVE INTEGRATION */}
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-amber-300 font-bold flex items-center gap-1.5">
+                          <FaVideo /> Select Video Provider
                         </label>
-
-                        {/* Upload Progress Bar */}
-                        {uploadingLessonVideo && (
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] text-amber-400 font-bold">
-                              <span>Uploading...</span>
-                              <span>{lessonVideoProgress}%</span>
-                            </div>
-                            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300"
-                                style={{ width: `${lessonVideoProgress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        )}
+                        <select
+                          value={newLessonProvider}
+                          onChange={(e) => setNewLessonProvider(e.target.value)}
+                          className="bg-[#090d16] border border-amber-500/30 text-amber-300 font-bold text-xs rounded-lg px-3 py-1.5 outline-none"
+                        >
+                          <option value="google-drive">Google Drive Video (Recommended)</option>
+                          <option value="external">External URL / Direct Link / Cloudinary</option>
+                        </select>
                       </div>
 
-                      {/* Video URL fallback input */}
-                      <input
-                        type="url"
-                        placeholder="Or enter direct video URL / YouTube link..."
-                        value={newLessonVideoUrl}
-                        onChange={(e) => setNewLessonVideoUrl(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
-                      />
+                      {newLessonProvider === 'google-drive' ? (
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-300 font-semibold block">
+                            Google Drive File ID or Shareable Link
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://drive.google.com/file/d/1ABCxyz123/view or paste File ID"
+                            value={newLessonDriveInput}
+                            onChange={(e) => setNewLessonDriveInput(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
+                          />
 
-                      {/* VIDEO PREVIEW PLAYER */}
-                      {newLessonVideoUrl && (
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] uppercase font-bold text-amber-400 block">Uploaded Video Preview</span>
-                          <video
-                            src={newLessonVideoUrl}
-                            controls
-                            poster={newLessonThumbnail}
-                            className="w-full max-h-48 rounded-xl bg-black border border-white/10"
+                          {newLessonDriveInput && (
+                            <div className="text-[11px] font-mono text-[#00e5a0]">
+                              ✓ Normalised File ID: <span className="font-bold">{newLessonDriveInput.match(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,100})/)?.[1] || newLessonDriveInput}</span>
+                            </div>
+                          )}
+
+                          {/* Instructions Box */}
+                          <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[11px] space-y-1.5 text-blue-200">
+                            <span className="font-bold text-blue-300 block">How to add a Google Drive course video:</span>
+                            <ol className="list-decimal pl-4 space-y-0.5 text-gray-300">
+                              <li>Upload your course video to your Google Drive account.</li>
+                              <li>Right click the file, click <strong>Share</strong>, and set General Access to <em>Anyone with the link</em>.</li>
+                              <li>Copy the link (e.g. <code>https://drive.google.com/file/d/FILE_ID/view</code>).</li>
+                              <li>Paste the URL or File ID in the input box above and save.</li>
+                            </ol>
+                            <p className="text-[10px] text-amber-400 font-bold pt-1">
+                              ⚠️ Note: Do not upload private credentials or Google API secrets into the frontend.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex flex-col gap-2">
+                            <input
+                              type="file"
+                              accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                              onChange={(e) => handleUploadVideoFile(e, false)}
+                              disabled={uploadingLessonVideo}
+                              className="hidden"
+                              id="new-lesson-video-file"
+                            />
+                            <label
+                              htmlFor="new-lesson-video-file"
+                              className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
+                            >
+                              {uploadingLessonVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
+                              <span>{uploadingLessonVideo ? `Uploading Video... ${lessonVideoProgress}%` : 'Upload Video File to Cloudinary'}</span>
+                            </label>
+                          </div>
+
+                          <input
+                            type="url"
+                            placeholder="Or enter direct video URL / YouTube / Vimeo link..."
+                            value={newLessonVideoUrl}
+                            onChange={(e) => setNewLessonVideoUrl(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
                           />
                         </div>
                       )}
+                    </div>
+
+                    {/* FREE PREVIEW CHECKBOX */}
+                    <div className="flex items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                      <input
+                        type="checkbox"
+                        id="newLessonIsPreview"
+                        checked={newLessonIsPreview}
+                        onChange={(e) => setNewLessonIsPreview(e.target.checked)}
+                        className="w-4 h-4 accent-amber-400 cursor-pointer"
+                      />
+                      <label htmlFor="newLessonIsPreview" className="text-xs font-bold text-gray-200 cursor-pointer select-none">
+                        Mark as Free Preview Video (Allow non-purchased users to watch for free)
+                      </label>
                     </div>
 
                     {/* DUAL OPTION MODULE THUMBNAIL (Upload File or Enter URL) */}
@@ -1567,82 +1615,84 @@ export function AdminDashboard() {
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none resize-none"
                 ></textarea>
               </div>
-
-              {/* VIDEO MANAGEMENT & PREVIEW */}
+                        {/* VIDEO PROVIDER & GOOGLE DRIVE INTEGRATION */}
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-amber-300 font-bold flex items-center gap-1.5">
-                    <FaVideo /> Video File & Cloudinary Stream
+                    <FaVideo /> Select Video Provider
                   </label>
-                  {editVideoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditVideoUrl('');
-                        setEditVideoPublicId('');
-                        setEditVideoDuration(0);
-                        setEditVideoFormat('');
-                        setEditVideoSize(0);
-                      }}
-                      className="text-red-400 hover:text-red-300 text-[11px] font-bold underline"
-                    >
-                      Delete Video
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
-                    onChange={(e) => handleUploadVideoFile(e, true)}
-                    disabled={uploadingEditVideo}
-                    className="hidden"
-                    id="edit-lesson-video-file"
-                  />
-                  <label
-                    htmlFor="edit-lesson-video-file"
-                    className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
+                  <select
+                    value={editProvider}
+                    onChange={(e) => setEditProvider(e.target.value)}
+                    className="bg-[#090d16] border border-amber-500/30 text-amber-300 font-bold text-xs rounded-lg px-3 py-1.5 outline-none"
                   >
-                    {uploadingEditVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
-                    <span>{uploadingEditVideo ? `Uploading Replace Video... ${editVideoProgress}%` : 'Replace Video (Upload File)'}</span>
-                  </label>
-
-                  {uploadingEditVideo && (
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-amber-400 font-bold">
-                        <span>Uploading Video...</span>
-                        <span>{editVideoProgress}%</span>
-                      </div>
-                      <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300"
-                          style={{ width: `${editVideoProgress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
+                    <option value="google-drive">Google Drive Video (Recommended)</option>
+                    <option value="external">External URL / Direct Link / Cloudinary</option>
+                  </select>
                 </div>
 
-                <input
-                  type="url"
-                  placeholder="Or paste video URL..."
-                  value={editVideoUrl}
-                  onChange={(e) => setEditVideoUrl(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none font-mono text-xs"
-                />
+                {editProvider === 'google-drive' ? (
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-300 font-semibold block">
+                      Google Drive File ID or Shareable Link
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://drive.google.com/file/d/1ABCxyz123/view or paste File ID"
+                      value={editDriveInput}
+                      onChange={(e) => setEditDriveInput(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
+                    />
 
-                {editVideoUrl && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-amber-400 block">Video Preview</span>
-                    <video
-                      src={editVideoUrl}
-                      controls
-                      poster={editThumbnail}
-                      className="w-full max-h-48 rounded-xl bg-black border border-white/10"
+                    {editDriveInput && (
+                      <div className="text-[11px] font-mono text-[#00e5a0]">
+                        ✓ Normalised File ID: <span className="font-bold">{editDriveInput.match(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,100})/)?.[1] || editDriveInput}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                        onChange={(e) => handleUploadVideoFile(e, true)}
+                        disabled={uploadingEditVideo}
+                        className="hidden"
+                        id="edit-lesson-video-file"
+                      />
+                      <label
+                        htmlFor="edit-lesson-video-file"
+                        className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-amber-300 font-bold transition"
+                      >
+                        {uploadingEditVideo ? <FaSpinner className="animate-spin" /> : <FaCloudUploadAlt size={18} />}
+                        <span>{uploadingEditVideo ? `Uploading... ${editVideoProgress}%` : 'Upload Video to Cloudinary'}</span>
+                      </label>
+                    </div>
+
+                    <input
+                      type="url"
+                      placeholder="Or enter direct video URL / YouTube / Vimeo link..."
+                      value={editVideoUrl}
+                      onChange={(e) => setEditVideoUrl(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
                     />
                   </div>
                 )}
+              </div>
+
+              {/* FREE PREVIEW CHECKBOX */}
+              <div className="flex items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="editIsPreview"
+                  checked={editIsPreview}
+                  onChange={(e) => setEditIsPreview(e.target.checked)}
+                  className="w-4 h-4 accent-amber-400 cursor-pointer"
+                />
+                <label htmlFor="editIsPreview" className="text-xs font-bold text-gray-200 cursor-pointer select-none">
+                  Mark as Free Preview Video (Allow non-purchased users to watch for free)
+                </label>
               </div>
 
               {/* DUAL OPTION EDIT MODULE THUMBNAIL (Upload File or Enter URL) */}
