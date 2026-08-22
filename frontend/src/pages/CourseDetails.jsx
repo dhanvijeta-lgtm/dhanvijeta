@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
 import { useAuth } from '../store/authContext';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
+import CheckoutModal from '../components/CheckoutModal/CheckoutModal';
 import {
   FaRegClock,
   FaStar,
@@ -12,20 +13,22 @@ import {
   FaTags,
   FaLock,
   FaPlayCircle,
-  FaTimes
+  FaTimes,
+  FaShieldAlt
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 export function CourseDetails({ onOpenLogin }) {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isLoggedIn } = useAuth();
 
   const [couponInput, setCouponInput] = useState('');
   const [activeCoupon, setActiveCoupon] = useState(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [openSection, setOpenSection] = useState(0);
   const [previewLesson, setPreviewLesson] = useState(null);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   // Fetch course details using TanStack Query
   const { data: course, isLoading, error } = useQuery({
@@ -104,94 +107,31 @@ export function CourseDetails({ onOpenLogin }) {
     }
   };
 
-  // Buy Now Flow
-  const handleBuyNow = async () => {
+  // Trigger Checkout Modal
+  const handleStartCheckout = () => {
     if (!isLoggedIn) {
       toast.error('Please sign in to enroll in the course.');
       onOpenLogin();
       return;
     }
-
-    setCheckoutLoading(true);
-    try {
-      const checkoutRes = await client.post('/payments/checkout', {
-        courseId: course._id,
-        couponCode: activeCoupon ? activeCoupon.couponCode : null
-      });
-
-      const orderData = checkoutRes.data.data;
-
-      if (orderData.isFree) {
-        toast.success('Enrolled in free course successfully! Welcome to your Batch.');
-        navigate(`/my-batch/${course._id}`);
-        return;
-      }
-
-      if (orderData.isMock) {
-        await client.post('/payments/verify', {
-          orderId: orderData.orderId,
-          paymentId: `mock_pay_${Math.random().toString(36).slice(-8)}`,
-          signature: `mock_sig_${Math.random().toString(36).slice(-12)}`
-        });
-
-        toast.success('Mock checkout successful! Access granted.');
-        navigate(`/my-batch/${course._id}`);
-      } else {
-        const options = {
-          key: orderData.razorpayKeyId,
-          amount: Math.round(orderData.amount * 100),
-          currency: 'INR',
-          name: 'Dhan Vijeta EdTech',
-          description: `Enrollment fee for ${course.title}`,
-          order_id: orderData.orderId,
-          handler: async function (response) {
-            try {
-              await client.post('/payments/verify', {
-                orderId: orderData.orderId,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature
-              });
-              toast.success('Payment verified successfully! Welcome to your Batch.');
-              navigate(`/my-batch/${course._id}`);
-            } catch (err) {
-              toast.error(err.response?.data?.message || 'Signature verification failed.');
-            }
-          },
-          modal: {
-            ondismiss: async function () {
-              try {
-                await client.post('/payments/cancel', { orderId: orderData.orderId });
-              } catch (e) {
-                // Silent catch
-              }
-              toast.error('Payment cancelled.');
-            }
-          },
-          prefill: {
-            name: user?.name || '',
-            email: user?.email || ''
-          },
-          theme: {
-            color: '#ffd700'
-          }
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (response) {
-          toast.error(`Payment failed: ${response.error?.description || 'Transaction unsuccessful'}`);
-        });
-        rzp.open();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Checkout order generation failed.');
-    } finally {
-      setCheckoutLoading(false);
-    }
+    setShowCheckoutModal(true);
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start relative">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start relative pb-20 sm:pb-0">
       
+      {/* PREMIUM CHECKOUT MODAL OVERLAY */}
+      {showCheckoutModal && (
+        <CheckoutModal
+          course={course}
+          initialCoupon={activeCoupon}
+          onClose={() => setShowCheckoutModal(false)}
+          onPaymentSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['my-purchases'] });
+          }}
+        />
+      )}
+
       {/* FREE PREVIEW VIDEO MODAL PLAYER */}
       {previewLesson && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
@@ -370,7 +310,7 @@ export function CourseDetails({ onOpenLogin }) {
         )}
       </div>
 
-      {/* RIGHT: PRICING CARD */}
+      {/* RIGHT: PRICING CARD (Desktop Sticky & Mobile Bar) */}
       <div className="lg:col-span-1">
         <div className="glass-card rounded-3xl p-6 border border-white/10 shadow-2xl space-y-6 sticky top-24">
           <div className="text-center pb-4 border-b border-white/10">
@@ -401,17 +341,14 @@ export function CourseDetails({ onOpenLogin }) {
           </div>
 
           <button
-            onClick={isEnrolled ? () => navigate(`/my-batch/${course._id}`) : handleBuyNow}
-            disabled={checkoutLoading}
-            className={`w-full font-extrabold text-center py-4 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 ${
+            onClick={isEnrolled ? () => navigate(`/my-batch/${course._id}`) : handleStartCheckout}
+            className={`w-full font-extrabold text-center py-4 rounded-xl transition flex items-center justify-center gap-2 ${
               isUnlocked
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-[#030710] shadow-[0_0_20px_rgba(0,229,160,0.4)]'
                 : 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-400 hover:from-amber-500 hover:to-yellow-300 text-[#030710] shadow-[0_0_20px_rgba(245,158,11,0.4)]'
             }`}
           >
-            {checkoutLoading ? (
-              isFree ? 'Enrolling...' : 'Redirecting to checkout...'
-            ) : isEnrolled ? (
+            {isEnrolled ? (
               <>
                 <FaPlayCircle size={18} /> Go to My Batch / Watch Course
               </>
@@ -420,7 +357,9 @@ export function CourseDetails({ onOpenLogin }) {
                 <FaPlayCircle size={18} /> Enroll & Watch for Free
               </>
             ) : (
-              'Enroll / Buy Now'
+              <>
+                <FaShieldAlt size={16} /> Enroll / Buy Now
+              </>
             )}
           </button>
 
@@ -465,6 +404,23 @@ export function CourseDetails({ onOpenLogin }) {
           </div>
         </div>
       </div>
+
+      {/* MOBILE STICKY BOTTOM BAR FOR MOBILE PHONES */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090d16]/95 backdrop-blur-xl border-t border-white/10 p-3 flex items-center justify-between gap-4 shadow-2xl">
+        <div>
+          <span className="text-[10px] text-gray-400 uppercase font-bold block">Course Price</span>
+          <span className="text-xl font-black text-amber-400 font-mono">
+            {isFree ? 'FREE' : `₹${currentPrice.toLocaleString('en-IN')}`}
+          </span>
+        </div>
+        <button
+          onClick={isEnrolled ? () => navigate(`/my-batch/${course._id}`) : handleStartCheckout}
+          className="flex-1 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-400 text-[#030710] font-black py-3 rounded-xl shadow-lg text-xs flex items-center justify-center gap-2"
+        >
+          {isEnrolled ? 'Go to My Batch' : isFree ? 'Enroll Free' : 'Enroll / Buy Now'}
+        </button>
+      </div>
+
     </div>
   );
 }

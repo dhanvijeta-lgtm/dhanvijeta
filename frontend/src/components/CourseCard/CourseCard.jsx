@@ -1,12 +1,27 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaHeart, FaRegHeart, FaRegClock } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
+import client from '../../api/client';
+import { FaStar, FaHeart, FaRegHeart, FaRegClock, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../../store/authContext';
 
 export function CourseCard({ course }) {
   const { wishlist, toggleWishlist, isLoggedIn } = useAuth();
   
   const isWishlisted = wishlist.includes(course._id);
+
+  // Fetch student purchases if logged in to check enrollment status
+  const { data: myPurchases } = useQuery({
+    queryKey: ['my-purchases'],
+    queryFn: async () => {
+      if (!isLoggedIn) return [];
+      const res = await client.get('/my-batch');
+      return res.data.data;
+    },
+    enabled: !!isLoggedIn
+  });
+
+  const isEnrolled = myPurchases?.some(p => p.courseId?._id === course?._id || p.courseId === course?._id);
 
   // Calculate discount price
   const basePrice = course.price;
@@ -82,8 +97,12 @@ export function CourseCard({ course }) {
           {/* Pricing Details */}
           <div className="flex items-baseline justify-between border-t border-white/5 pt-4 mt-2">
             <div className="flex items-baseline gap-2">
-              {isFree ? (
-                <span className="text-xl font-black text-emerald-400 font-mono tracking-wide">FREE</span>
+              {isEnrolled ? (
+                <span className="text-sm font-extrabold text-[#00e5a0] flex items-center gap-1">
+                  <FaCheckCircle /> Enrolled
+                </span>
+              ) : isFree ? (
+                <span className="text-xl font-black text-[#00e5a0] font-mono tracking-wide">FREE</span>
               ) : (
                 <>
                   <span className="text-xl font-black text-white">₹{discountedPrice.toLocaleString('en-IN')}</span>
@@ -93,8 +112,12 @@ export function CourseCard({ course }) {
                 </>
               )}
             </div>
-            {isFree ? (
-              <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+            {isEnrolled ? (
+              <span className="text-[10px] font-extrabold text-[#00e5a0] bg-[#00e5a0]/10 border border-[#00e5a0]/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                ACTIVE
+              </span>
+            ) : isFree ? (
+              <span className="text-[10px] font-extrabold text-[#00e5a0] bg-[#00e5a0]/10 border border-[#00e5a0]/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
                 FREE ACCESS
               </span>
             ) : course.discount > 0 && (
@@ -106,10 +129,14 @@ export function CourseCard({ course }) {
 
           {/* Action Row */}
           <Link
-            to={`/courses/${course.slug}`}
-            className="w-full flex items-center justify-center bg-finance-navy border border-white/10 group-hover:border-finance-gold text-white hover:text-finance-dark hover:bg-finance-gold font-bold text-sm py-2.5 rounded-xl transition-all mt-4"
+            to={isEnrolled ? `/my-batch/${course._id}` : `/courses/${course.slug}`}
+            className={`w-full flex items-center justify-center font-bold text-sm py-2.5 rounded-xl transition-all mt-4 ${
+              isEnrolled
+                ? 'bg-[#00e5a0]/15 hover:bg-[#00e5a0] text-[#00e5a0] hover:text-[#030710] border border-[#00e5a0]/30 shadow-[0_0_15px_rgba(0,229,160,0.2)]'
+                : 'bg-finance-navy border border-white/10 group-hover:border-finance-gold text-white hover:text-finance-dark hover:bg-finance-gold'
+            }`}
           >
-            Explore Course
+            {isEnrolled ? 'Continue Learning →' : 'Explore Course'}
           </Link>
         </div>
       </div>
