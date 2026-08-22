@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { perfManager } from './PerformanceManager';
 
-export function MarketParticles({ variant = 'home', pointer = { x: 0, y: 0 } }) {
+export function MarketParticles({ variant = 'home', intensity = 1.0, pointer = { x: 0, y: 0 } }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -20,21 +20,21 @@ export function MarketParticles({ variant = 'home', pointer = { x: 0, y: 0 } }) 
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    // Initialize particles
-    const particleCount = perfManager.getParticleCount(variant);
+    // Particle count scaled by page intensity & device
+    const baseCount = perfManager.isMobile ? 25 : Math.round(60 * intensity);
     const colors = ['#f59e0b', '#00e5a0', '#00e5ff', '#ffffff'];
 
-    const particles = Array.from({ length: particleCount }, () => ({
+    const particles = Array.from({ length: baseCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      radius: Math.random() * 1.5 + 0.8,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+      radius: Math.random() * 2.2 + 1.2,
       color: colors[Math.floor(Math.random() * colors.length)],
-      alpha: Math.random() * 0.5 + 0.2
+      alpha: Math.random() * 0.4 + 0.3
     }));
 
-    const maxConnectDistance = perfManager.isMobile ? 80 : 120;
+    const maxConnectDistance = perfManager.isMobile ? 90 : 140;
 
     const render = () => {
       if (!perfManager.isTabVisible) {
@@ -55,26 +55,29 @@ export function MarketParticles({ variant = 'home', pointer = { x: 0, y: 0 } }) 
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
-        // Mouse Parallax Reaction (Desktop Only)
+        // Cursor Parallax Interaction (Desktop Only)
         if (perfManager.shouldEnableMouseParallax() && pointer.x && pointer.y) {
           const dx = pointer.x - p.x;
           const dy = pointer.y - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            const force = (100 - dist) / 100;
-            p.x -= (dx / dist) * force * 1.2;
-            p.y -= (dy / dist) * force * 1.2;
+          if (dist < 120) {
+            const force = (120 - dist) / 120;
+            p.x -= (dx / dist) * force * 1.5;
+            p.y -= (dy / dist) * force * 1.5;
           }
         }
 
-        // Draw Node Point
+        // Draw Particle Point with Glow
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.alpha * 0.7;
+        ctx.globalAlpha = Math.min(0.65, p.alpha * intensity);
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
         ctx.fill();
+        ctx.shadowBlur = 0;
 
-        // Connect nearby particles
+        // Connect nearby data nodes
         for (let j = idx + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x;
@@ -82,13 +85,13 @@ export function MarketParticles({ variant = 'home', pointer = { x: 0, y: 0 } }) 
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < maxConnectDistance) {
-            const lineAlpha = (1 - dist / maxConnectDistance) * 0.15;
+            const lineAlpha = (1 - dist / maxConnectDistance) * 0.25 * intensity;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = p.color;
             ctx.globalAlpha = lineAlpha;
-            ctx.lineWidth = 0.8;
+            ctx.lineWidth = 1.0;
             ctx.stroke();
           }
         }
@@ -104,7 +107,7 @@ export function MarketParticles({ variant = 'home', pointer = { x: 0, y: 0 } }) 
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [variant, pointer]);
+  }, [variant, intensity, pointer]);
 
   return (
     <canvas

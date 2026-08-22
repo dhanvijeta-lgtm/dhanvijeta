@@ -1,51 +1,99 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { perfManager } from './PerformanceManager';
 
-export function FloatingCandles({ variant = 'home' }) {
-  // Mobile check to skip candle silhouettes for performance
-  if (perfManager.isMobile) return null;
+export function FloatingCandles({ variant = 'home', intensity = 1.0 }) {
+  const canvasRef = useRef(null);
 
-  const candles = [
-    { type: 'bullish', x: '12%', y: '25%', height: '70px', wick: '110px', delay: '0s' },
-    { type: 'bearish', x: '82%', y: '35%', height: '60px', wick: '95px', delay: '2s' },
-    { type: 'bullish', x: '22%', y: '65%', height: '85px', wick: '130px', delay: '4s' },
-    { type: 'bearish', x: '75%', y: '70%', height: '55px', wick: '85px', delay: '1s' },
-    { type: 'bullish', x: '48%', y: '15%', height: '65px', wick: '100px', delay: '3s' }
-  ];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    // Generate 16 floating candlesticks
+    const candleCount = perfManager.isMobile ? 6 : Math.round(16 * intensity);
+    const candles = Array.from({ length: candleCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vy: (Math.random() - 0.5) * 0.35,
+      vx: (Math.random() - 0.5) * 0.15,
+      width: Math.random() * 8 + 12,
+      bodyHeight: Math.random() * 40 + 35,
+      wickHeight: Math.random() * 70 + 60,
+      isBullish: Math.random() > 0.4,
+      alpha: Math.random() * 0.2 + 0.15
+    }));
+
+    const render = () => {
+      if (!perfManager.isTabVisible) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
+      ctx.clearRect(0, 0, width, height);
+
+      candles.forEach((c) => {
+        c.y += c.vy;
+        c.x += c.vx;
+
+        if (c.y < -100) c.y = height + 50;
+        if (c.y > height + 100) c.y = -50;
+        if (c.x < -50) c.x = width + 50;
+        if (c.x > width + 50) c.x = -50;
+
+        const opacity = Math.min(0.35, c.alpha * intensity);
+        const mainColor = c.isBullish ? '#00d084' : '#ef4444';
+
+        // Draw Wick
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y - c.wickHeight / 2);
+        ctx.lineTo(c.x, c.y + c.wickHeight / 2);
+        ctx.strokeStyle = mainColor;
+        ctx.globalAlpha = opacity * 0.8;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Draw Candle Body
+        ctx.beginPath();
+        ctx.rect(c.x - c.width / 2, c.y - c.bodyHeight / 2, c.width, c.bodyHeight);
+        ctx.fillStyle = mainColor;
+        ctx.globalAlpha = opacity;
+        ctx.shadowColor = mainColor;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.strokeStyle = mainColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      });
+
+      ctx.globalAlpha = 1.0;
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [variant, intensity]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-[2] overflow-hidden opacity-25">
-      {candles.map((c, i) => {
-        const isBullish = c.type === 'bullish';
-        const colorClass = isBullish
-          ? 'bg-[#00e5a0]/40 border-[#00e5a0]/60 shadow-[0_0_15px_rgba(0,229,160,0.3)]'
-          : 'bg-[#ff4d4d]/30 border-[#ff4d4d]/50 shadow-[0_0_15px_rgba(255,77,77,0.3)]';
-        const wickColor = isBullish ? 'bg-[#00e5a0]/60' : 'bg-[#ff4d4d]/50';
-
-        return (
-          <div
-            key={i}
-            className="absolute flex items-center justify-center animate-pulse-slow"
-            style={{
-              left: c.x,
-              top: c.y,
-              animationDelay: c.delay
-            }}
-          >
-            {/* Wick */}
-            <div
-              className={`w-[2px] ${wickColor} rounded-full absolute`}
-              style={{ height: c.wick }}
-            />
-            {/* Candle Body */}
-            <div
-              className={`w-3.5 rounded-sm border backdrop-blur-xs relative z-10 ${colorClass}`}
-              style={{ height: c.height }}
-            />
-          </div>
-        );
-      })}
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-[2]"
+    />
   );
 }
 

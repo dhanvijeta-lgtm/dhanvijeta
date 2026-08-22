@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { perfManager } from './PerformanceManager';
 
-export function FinancialGrid({ variant = 'home', scrollY = 0 }) {
+export function FinancialGrid({ variant = 'home', intensity = 1.0, scrollY = 0 }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -30,19 +30,16 @@ export function FinancialGrid({ variant = 'home', scrollY = 0 }) {
 
       ctx.clearRect(0, 0, width, height);
 
-      // Grid Opacity based on page variant
-      let opacity = 0.06;
-      if (variant === 'home') opacity = 0.09;
-      if (variant === 'about' || variant === 'contact') opacity = 0.07;
-      if (perfManager.isMobile) opacity = 0.04;
+      // Grid Opacity target: 0.10 - 0.18
+      const opacity = Math.min(0.18, 0.12 * intensity);
 
       ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
       ctx.lineWidth = 1;
 
-      const gridSize = perfManager.isMobile ? 40 : 50;
-      gridOffset = (gridOffset + 0.15) % gridSize;
+      const gridSize = perfManager.isMobile ? 45 : 55;
+      gridOffset = (gridOffset + 0.3) % gridSize;
 
-      const parallaxOffset = scrollY * 0.05;
+      const parallaxOffset = scrollY * 0.08;
 
       // Draw Vertical Lines
       for (let x = 0; x < width; x += gridSize) {
@@ -52,7 +49,7 @@ export function FinancialGrid({ variant = 'home', scrollY = 0 }) {
         ctx.stroke();
       }
 
-      // Draw Horizontal Lines with Parallax & Motion
+      // Draw Horizontal Moving Grid Lines
       for (let y = (gridOffset + parallaxOffset) % gridSize; y < height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -60,18 +57,16 @@ export function FinancialGrid({ variant = 'home', scrollY = 0 }) {
         ctx.stroke();
       }
 
-      // Draw Occasional Glowing Intersection Dots
-      if (!perfManager.isMobile) {
-        const time = Date.now() * 0.001;
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
-        for (let x = gridSize; x < width; x += gridSize * 3) {
-          for (let y = gridSize; y < height; y += gridSize * 3) {
-            const glow = Math.sin(time + x + y) * 0.5 + 0.5;
-            if (glow > 0.6) {
-              ctx.beginPath();
-              ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-              ctx.fill();
-            }
+      // Glowing Intersection Dots
+      const time = Date.now() * 0.0015;
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+      for (let x = gridSize; x < width; x += gridSize * 2) {
+        for (let y = gridSize; y < height; y += gridSize * 2) {
+          const glow = Math.sin(time + x * 0.01 + y * 0.01) * 0.5 + 0.5;
+          if (glow > 0.45) {
+            ctx.beginPath();
+            ctx.arc(x, y, 2.0, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
       }
@@ -85,7 +80,7 @@ export function FinancialGrid({ variant = 'home', scrollY = 0 }) {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [variant, scrollY]);
+  }, [variant, intensity, scrollY]);
 
   return (
     <canvas

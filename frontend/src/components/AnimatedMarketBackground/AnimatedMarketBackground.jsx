@@ -12,22 +12,24 @@ export function AnimatedMarketBackground({ variant: customVariant, forceAuthMode
   const [scrollY, setScrollY] = useState(0);
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
 
-  // Determine current page variant
-  const variant = useMemo(() => {
-    if (customVariant) return customVariant;
-    if (forceAuthMode) return 'auth';
+  // Determine current page variant & intensity multiplier
+  const { variant, intensity } = useMemo(() => {
+    if (customVariant) return { variant: customVariant, intensity: 1.0 };
+    if (forceAuthMode) return { variant: 'auth', intensity: 0.5 };
 
     const path = location.pathname;
-    if (path === '/') return 'home';
-    if (path.startsWith('/courses')) return 'courses';
-    if (path.startsWith('/demo-videos')) return 'demo';
-    if (path.startsWith('/blog')) return 'blog';
-    if (path === '/about') return 'about';
-    if (path === '/contact') return 'contact';
-    if (path === '/verify-email' || path === '/reset-password') return 'auth';
-    if (path.startsWith('/dashboard') || path.startsWith('/my-batch') || path.startsWith('/admin')) return 'batch';
+    if (path === '/') return { variant: 'home', intensity: 1.0 };
+    if (path.startsWith('/courses')) return { variant: 'courses', intensity: 0.85 };
+    if (path.startsWith('/demo-videos')) return { variant: 'demo', intensity: 0.75 };
+    if (path.startsWith('/blog')) return { variant: 'blog', intensity: 0.60 };
+    if (path === '/about') return { variant: 'about', intensity: 0.55 };
+    if (path === '/contact') return { variant: 'contact', intensity: 0.50 };
+    if (path === '/verify-email' || path === '/reset-password') return { variant: 'auth', intensity: 0.5 };
+    if (path.startsWith('/dashboard') || path.startsWith('/my-batch') || path.startsWith('/admin')) {
+      return { variant: 'batch', intensity: 0.70 };
+    }
 
-    return 'home';
+    return { variant: 'home', intensity: 1.0 };
   }, [location.pathname, customVariant, forceAuthMode]);
 
   // Track Scroll & Pointer Position
@@ -65,7 +67,7 @@ export function AnimatedMarketBackground({ variant: customVariant, forceAuthMode
   return (
     <div
       id="global-animated-market-background"
-      className="fixed inset-0 pointer-events-none z-[-10] overflow-hidden select-none"
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
       style={{
         transform: `translate3d(0, ${scrollY * -0.02}px, 0)`
       }}
@@ -73,29 +75,29 @@ export function AnimatedMarketBackground({ variant: customVariant, forceAuthMode
       {/* LAYER 1: Deep Black & Navy Base Tones */}
       <div className="absolute inset-0 bg-[#020611]" />
 
-      {/* Subtle Radial Glows according to Brand Identity */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(245,158,11,0.14),transparent_70%)]" />
-      <div className="absolute top-1/4 left-1/10 w-[500px] h-[500px] bg-[#f59e0b]/6 rounded-full blur-[140px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute bottom-1/3 right-1/10 w-[550px] h-[550px] bg-[#00e5a0]/6 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute top-2/3 left-1/3 w-[450px] h-[450px] bg-[#00e5ff]/5 rounded-full blur-[150px] pointer-events-none" />
+      {/* Vibrant Ambient Glows */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(245,158,11,0.22),transparent_70%)]" />
+      <div className="absolute top-1/4 left-1/10 w-[550px] h-[550px] bg-[#f59e0b]/12 rounded-full blur-[140px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute bottom-1/3 right-1/10 w-[600px] h-[600px] bg-[#00e5a0]/12 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute top-2/3 left-1/3 w-[500px] h-[500px] bg-[#00e5ff]/10 rounded-full blur-[150px] pointer-events-none" />
 
       {/* LAYER 2: Perspective Financial Grid */}
-      <FinancialGrid variant={variant} scrollY={scrollY} />
+      <FinancialGrid variant={variant} intensity={intensity} scrollY={scrollY} />
 
       {/* LAYER 3: Live Market Particle Network */}
-      <MarketParticles variant={variant} pointer={pointer} />
+      <MarketParticles variant={variant} intensity={intensity} pointer={pointer} />
 
       {/* LAYER 4: Atmospheric Floating Candlestick Silhouettes */}
-      <FloatingCandles variant={variant} />
+      <FloatingCandles variant={variant} intensity={intensity} />
 
       {/* LAYER 5: Animated Glowing Market Lines & Waveforms */}
-      <MarketLines variant={variant} />
+      <MarketLines variant={variant} intensity={intensity} />
 
       {/* LAYER 6: Subtle Data Ticker Streams */}
-      <DataStreams variant={variant} />
+      <DataStreams variant={variant} intensity={intensity} />
 
       {/* LAYER 7: Readability Safeguard Gradient Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020611]/75 via-transparent to-[#020611]/85 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#020611]/60 via-transparent to-[#020611]/75 pointer-events-none" />
     </div>
   );
 }

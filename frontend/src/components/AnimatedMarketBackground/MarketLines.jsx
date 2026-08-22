@@ -1,75 +1,94 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import { perfManager } from './PerformanceManager';
 
-export function MarketLines({ variant = 'home' }) {
-  // Determine gradient stroke based on variant
-  const getGradientStops = () => {
-    switch (variant) {
-      case 'courses':
-        return (
-          <>
-            <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.2" />
-          </>
-        );
-      case 'demo':
-        return (
-          <>
-            <stop offset="0%" stopColor="#00e5a0" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.2" />
-          </>
-        );
-      case 'about':
-        return (
-          <>
-            <stop offset="0%" stopColor="#00e5a0" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
-          </>
-        );
-      case 'home':
-      default:
-        return (
-          <>
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#00e5a0" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.3" />
-          </>
-        );
-    }
-  };
+export function MarketLines({ variant = 'home', intensity = 1.0 }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    let phase = 0;
+
+    // Define 4 distinct glowing market curves
+    const curves = [
+      { color: '#f59e0b', strokeWidth: 2.8, speed: 0.008, amplitude: 90, baseHeight: 0.40 },
+      { color: '#00e5a0', strokeWidth: 2.2, speed: 0.012, amplitude: 110, baseHeight: 0.55 },
+      { color: '#00e5ff', strokeWidth: 2.0, speed: 0.006, amplitude: 70, baseHeight: 0.70 },
+      { color: '#ffb000', strokeWidth: 1.5, speed: 0.015, amplitude: 80, baseHeight: 0.30 }
+    ];
+
+    const render = () => {
+      if (!perfManager.isTabVisible) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
+      ctx.clearRect(0, 0, width, height);
+      phase += 0.012;
+
+      curves.forEach((curve) => {
+        ctx.beginPath();
+        const baseOpacity = Math.min(0.35, 0.22 * intensity);
+        ctx.strokeStyle = curve.color;
+        ctx.globalAlpha = baseOpacity;
+        ctx.lineWidth = curve.strokeWidth;
+        ctx.shadowColor = curve.color;
+        ctx.shadowBlur = 12;
+
+        const points = 120;
+        const step = width / points;
+        const startY = height * curve.baseHeight;
+
+        ctx.moveTo(0, startY);
+
+        for (let i = 0; i <= points; i++) {
+          const x = i * step;
+          const y =
+            startY +
+            Math.sin(i * 0.05 + phase * curve.speed * 100) * curve.amplitude +
+            Math.cos(i * 0.02 + phase * 0.5) * (curve.amplitude * 0.4);
+
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      });
+
+      ctx.globalAlpha = 1.0;
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [variant, intensity]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-[3] overflow-hidden">
-      <svg
-        className="w-full h-full opacity-35"
-        preserveAspectRatio="none"
-        viewBox="0 0 1440 800"
-      >
-        <defs>
-          <linearGradient id={`marketLineGrad_${variant}`} x1="0" y1="0" x2="1" y2="0">
-            {getGradientStops()}
-          </linearGradient>
-        </defs>
-
-        {/* Primary Market Curve */}
-        <path
-          d="M0 480 Q 360 220, 720 380 T 1440 260"
-          fill="none"
-          stroke={`url(#marketLineGrad_${variant})`}
-          strokeWidth="2.5"
-          className="drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-        />
-
-        {/* Secondary Oscillating Signal Curve */}
-        <path
-          d="M0 580 Q 420 380, 840 520 T 1440 380"
-          fill="none"
-          stroke={`url(#marketLineGrad_${variant})`}
-          strokeWidth="1.2"
-          strokeDasharray="6 6"
-          className="opacity-40"
-        />
-      </svg>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-[3]"
+    />
   );
 }
 

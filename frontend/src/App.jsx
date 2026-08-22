@@ -47,7 +47,7 @@ function LayoutWrapper() {
   }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#020611] text-white relative selection:bg-amber-500/30 selection:text-amber-300">
+    <div className="flex flex-col min-h-screen bg-transparent text-white relative selection:bg-amber-500/30 selection:text-amber-300">
       {/* Global Cinematic Animated Background System */}
       <AnimatedMarketBackground forceAuthMode={isLoginOpen} />
 
