@@ -11,7 +11,7 @@ import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import LoginModal from './components/LoginModal/LoginModal';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
-import CinematicBackground from './components/CinematicBackground/CinematicBackground';
+import AnimatedMarketBackground from './components/AnimatedMarketBackground/AnimatedMarketBackground';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen';
 import PageTransition from './components/PageTransition/PageTransition';
 
@@ -47,9 +47,9 @@ function LayoutWrapper() {
   }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#030710] text-white relative selection:bg-amber-500/30 selection:text-amber-300">
-      {/* 6-Layer Cinematic Background System */}
-      <CinematicBackground forceAuthMode={isLoginOpen} />
+    <div className="flex flex-col min-h-screen bg-[#020611] text-white relative selection:bg-amber-500/30 selection:text-amber-300">
+      {/* Global Cinematic Animated Background System */}
+      <AnimatedMarketBackground forceAuthMode={isLoginOpen} />
 
       {/* Primary Navigation */}
       <Navbar onOpenLogin={() => setIsLoginOpen(true)} />
