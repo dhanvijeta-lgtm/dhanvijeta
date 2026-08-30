@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaChartLine, FaChartBar, FaClock, FaChartPie } from 'react-icons/fa';
+import { FaCoins, FaEthereum, FaGem, FaBitcoin } from 'react-icons/fa';
 
-function CountUp({ target, decimals = 2, delay = 0.5, duration = 1800 }) {
+function CountUp({ target, decimals = 2, delay = 0.3, duration = 1600 }) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
@@ -29,35 +29,106 @@ function CountUp({ target, decimals = 2, delay = 0.5, duration = 1800 }) {
   );
 }
 
-export function HudGlassCards({ pointer = { x: 0, y: 0 } }) {
-  const [nifty, setNifty] = useState({ val: 24320.15, change: '+1.24%', flash: false, isUp: true });
-  const [bankNifty, setBankNifty] = useState({ val: 52140.80, change: '+0.87%', flash: false, isUp: true });
+const MARKET_ASSETS = [
+  {
+    id: 'gold',
+    name: 'GOLD',
+    price: 7245.60,
+    decimals: 2,
+    change: '+0.78%',
+    isUp: true,
+    icon: FaCoins,
+    iconColor: '#f59e0b',
+    sparkline: 'M0 16 Q 25 4, 50 14 T 100 2',
+    strokeColor: '#00e5a0',
+    delay: 0.3,
+    top: '12%',
+    right: '22%'
+  },
+  {
+    id: 'ethereum',
+    name: 'ETHEREUM',
+    price: 182540.30,
+    decimals: 2,
+    change: '+2.35%',
+    isUp: true,
+    icon: FaEthereum,
+    iconColor: '#00e5ff',
+    sparkline: 'M0 18 Q 30 6, 60 14 T 100 3',
+    strokeColor: '#00e5ff',
+    delay: 0.45,
+    top: '12%',
+    right: '4%'
+  },
+  {
+    id: 'silver',
+    name: 'SILVER',
+    price: 89.65,
+    decimals: 2,
+    change: '+0.56%',
+    isUp: true,
+    icon: FaGem,
+    iconColor: '#e2e8f0',
+    sparkline: 'M0 15 Q 20 18, 55 8 T 100 4',
+    strokeColor: '#00e5a0',
+    delay: 0.6,
+    top: '32%',
+    right: '6%'
+  },
+  {
+    id: 'bitcoin',
+    name: 'BITCOIN',
+    price: 6345210.80,
+    decimals: 2,
+    change: '+1.62%',
+    isUp: true,
+    icon: FaBitcoin,
+    iconColor: '#f59e0b',
+    sparkline: 'M0 17 Q 35 3, 65 12 T 100 2',
+    strokeColor: '#00e5a0',
+    delay: 0.75,
+    top: '52%',
+    right: '18%'
+  }
+];
 
+export function HudGlassCards({ pointer = { x: 0, y: 0 } }) {
+  const [assetState, setAssetState] = useState(
+    MARKET_ASSETS.reduce((acc, a) => {
+      acc[a.id] = { val: a.price, change: a.change, flash: false, isUp: true };
+      return acc;
+    }, {})
+  );
+
+  // Subtle live micro-ticks simulation (demo visualization)
   useEffect(() => {
     const interval = setInterval(() => {
-      const isNiftyUp = Math.random() > 0.45;
-      const niftyDelta = (Math.random() * 0.85 * (isNiftyUp ? 1 : -1)).toFixed(2);
-      setNifty((prev) => ({
-        val: (parseFloat(prev.val) + parseFloat(niftyDelta)).toFixed(2),
-        change: `${isNiftyUp ? '+' : ''}${(1.24 + parseFloat(niftyDelta) * 0.02).toFixed(2)}%`,
-        flash: true,
-        isUp: isNiftyUp
-      }));
+      const targetAsset = MARKET_ASSETS[Math.floor(Math.random() * MARKET_ASSETS.length)];
+      const isUp = Math.random() > 0.35;
+      const deltaFactor = (Math.random() * 0.004 * (isUp ? 1 : -1));
 
-      const isBankUp = Math.random() > 0.4;
-      const bankDelta = (Math.random() * 1.2 * (isBankUp ? 1 : -1)).toFixed(2);
-      setBankNifty((prev) => ({
-        val: (parseFloat(prev.val) + parseFloat(bankDelta)).toFixed(2),
-        change: `${isBankUp ? '+' : ''}${(0.87 + parseFloat(bankDelta) * 0.01).toFixed(2)}%`,
-        flash: true,
-        isUp: isBankUp
-      }));
+      setAssetState((prev) => {
+        const curr = prev[targetAsset.id];
+        const newVal = Math.max(1, curr.val * (1 + deltaFactor));
+        const pct = ((deltaFactor >= 0 ? '+' : '') + (parseFloat(curr.change) + deltaFactor * 100).toFixed(2) + '%');
+        return {
+          ...prev,
+          [targetAsset.id]: {
+            val: parseFloat(newVal.toFixed(2)),
+            change: pct,
+            flash: true,
+            isUp
+          }
+        };
+      });
 
       setTimeout(() => {
-        setNifty((p) => ({ ...p, flash: false }));
-        setBankNifty((p) => ({ ...p, flash: false }));
-      }, 600);
-    }, 3500);
+        setAssetState((prev) => ({
+          ...prev,
+          [targetAsset.id]: { ...prev[targetAsset.id], flash: false }
+        }));
+      }, 500);
+    }, 3800);
 
     return () => clearInterval(interval);
   }, []);
@@ -67,199 +138,80 @@ export function HudGlassCards({ pointer = { x: 0, y: 0 } }) {
       className="absolute inset-0 pointer-events-none z-10 hidden lg:block overflow-hidden"
       style={{ transform: `translate(${pointer.x * 0.8}px, ${pointer.y * 0.8}px)` }}
     >
+      {MARKET_ASSETS.map((asset) => {
+        const state = assetState[asset.id] || { val: asset.price, change: asset.change, isUp: true };
+        const IconComponent = asset.icon;
 
-      {/* NIFTY 50 */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        className="absolute top-[14%] right-[22%]"
-      >
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className={`bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-52 transition-colors duration-300 ${
-            nifty.flash ? (nifty.isUp ? 'border-emerald-500/60 bg-emerald-950/30' : 'border-rose-500/60 bg-rose-950/30') : ''
-          }`}
-        >
-          <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
-            <span className="flex items-center gap-1.5"><FaChartLine className="text-[#00FF88]" /> NIFTY 50</span>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-white tracking-tight font-mono">
-              <CountUp target={24320.15} decimals={2} delay={0.6} />
-            </span>
-            <span className={`text-xs font-semibold font-mono ${nifty.isUp ? 'text-[#00FF88]' : 'text-rose-400'}`}>
-              {nifty.change}
-            </span>
-          </div>
-          <svg className="w-full h-5 mt-1" viewBox="0 0 100 25">
-            <motion.path
-              d="M0 20 Q 25 5, 50 15 T 100 2"
-              fill="none"
-              stroke="#00FF88"
-              strokeWidth="2"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.2, delay: 0.8 }}
-            />
-          </svg>
-        </motion.div>
-      </motion.div>
+        return (
+          <motion.div
+            key={asset.id}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: asset.delay, ease: [0.16, 1, 0.3, 1] }}
+            style={{ position: 'absolute', top: asset.top, right: asset.right }}
+            className="pointer-events-auto group cursor-pointer"
+          >
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 5 + asset.delay * 2, repeat: Infinity, ease: 'easeInOut', delay: asset.delay }}
+              className={`bg-[#090d16]/80 backdrop-blur-md border border-white/10 group-hover:border-[#00e5a0]/50 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-52 sm:w-56 transition-all duration-300 transform group-hover:-translate-y-1.5 group-hover:shadow-[0_20px_40px_rgba(0,229,160,0.25)] ${
+                state.flash
+                  ? state.isUp
+                    ? 'border-emerald-500/60 bg-emerald-950/30'
+                    : 'border-rose-500/60 bg-rose-950/30'
+                  : ''
+              }`}
+            >
+              {/* Header: Asset Icon & Name */}
+              <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
+                <span className="flex items-center gap-2 font-bold tracking-wider text-gray-300">
+                  <span
+                    className="p-1 rounded-md bg-white/5 border border-white/10 group-hover:scale-110 transition-transform duration-300"
+                    style={{ color: asset.iconColor }}
+                  >
+                    <IconComponent size={13} />
+                  </span>
+                  {asset.name}
+                </span>
+                <span className="text-[9px] text-gray-500 font-semibold tracking-widest uppercase">
+                  FINTECH
+                </span>
+              </div>
 
-      {/* BANK NIFTY */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.55 }}
-        className="absolute top-[14%] right-[5%]"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className={`bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-52 transition-colors duration-300 ${
-            bankNifty.flash ? (bankNifty.isUp ? 'border-emerald-500/60 bg-emerald-950/30' : 'border-rose-500/60 bg-rose-950/30') : ''
-          }`}
-        >
-          <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono mb-1">
-            <span className="flex items-center gap-1.5"><FaChartBar className="text-[#00FF88]" /> BANK NIFTY</span>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-white tracking-tight font-mono">
-              <CountUp target={52140.80} decimals={2} delay={0.75} />
-            </span>
-            <span className={`text-xs font-semibold font-mono ${bankNifty.isUp ? 'text-[#00FF88]' : 'text-rose-400'}`}>
-              {bankNifty.change}
-            </span>
-          </div>
-          <svg className="w-full h-5 mt-1" viewBox="0 0 100 25">
-            <motion.path
-              d="M0 18 Q 30 22, 60 8 T 100 3"
-              fill="none"
-              stroke="#00FF88"
-              strokeWidth="2"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.2, delay: 0.95 }}
-            />
-          </svg>
-        </motion.div>
-      </motion.div>
+              {/* Price & Change */}
+              <div className="flex items-baseline justify-between my-0.5">
+                <span className="text-base sm:text-lg font-extrabold text-white tracking-tight font-mono">
+                  ₹<CountUp target={state.val} decimals={asset.decimals} delay={asset.delay + 0.2} />
+                </span>
+                <span
+                  className={`text-xs font-bold font-mono px-1.5 py-0.5 rounded ${
+                    state.isUp ? 'text-[#00e5a0] bg-[#00e5a0]/10' : 'text-rose-400 bg-rose-500/10'
+                  }`}
+                >
+                  {state.change}
+                </span>
+              </div>
 
-      {/* MARKET SENTIMENT */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.7 }}
-        className="absolute top-[34%] right-[7%]"
-      >
-        <motion.div
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-          className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-56"
-        >
-          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block mb-1">MARKET SENTIMENT</span>
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl">🐂</span>
-            <div>
-              <span className="text-sm font-extrabold text-[#00FF88] tracking-wide block">BULLISH</span>
-              <span className="text-[10px] text-gray-400 font-mono block">EXPANSION PHASE</span>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* VOLUME */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
-        className="absolute bottom-[9%] left-[6%]"
-      >
-        <motion.div
-          animate={{ y: [0, -7, 0] }}
-          transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
-        >
-          <div className="p-2.5 bg-[#FF9F00]/10 rounded-lg border border-[#FF9F00]/20 text-[#FF9F00]">
-            <FaChartBar size={16} />
-          </div>
-          <div>
-            <span className="text-[10px] font-mono text-gray-400 uppercase block">VOLUME</span>
-            <span className="text-base font-extrabold text-white font-mono">84.2M</span>
-            <span className="text-[10px] text-[#00FF88] font-mono block">+12.65%</span>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* 52W HIGH */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.95 }}
-        className="absolute bottom-[9%] left-[21%]"
-      >
-        <motion.div
-          animate={{ y: [0, 7, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
-          className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
-        >
-          <div className="p-2.5 bg-[#00FF88]/10 rounded-lg border border-[#00FF88]/20 text-[#00FF88]">
-            <FaClock size={16} />
-          </div>
-          <div>
-            <span className="text-[10px] font-mono text-gray-400 uppercase block">52W HIGH</span>
-            <span className="text-base font-extrabold text-white font-mono">
-              <CountUp target={25148.30} decimals={2} delay={1.0} />
-            </span>
-            <span className="text-[10px] text-[#00FF88] font-mono block">+2.18%</span>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* ADVANCES */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 1.1 }}
-        className="absolute bottom-[9%] left-[36%]"
-      >
-        <motion.div
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 6.8, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
-          className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-[0_15px_35px_rgba(0,0,0,0.6)] w-48 flex items-center gap-3"
-        >
-          <div className="relative w-10 h-10 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#1e293b"
-                strokeWidth="3"
-              />
-              <motion.path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#00E5FF"
-                strokeWidth="3"
-                strokeDasharray="100, 100"
-                initial={{ strokeDashoffset: 100 }}
-                animate={{ strokeDashoffset: 22 }}
-                transition={{ duration: 1.8, delay: 1.2, ease: 'easeOut' }}
-              />
-            </svg>
-            <span className="absolute text-[10px] font-bold text-[#00E5FF] font-mono">78%</span>
-          </div>
-          <div>
-            <span className="text-[10px] font-mono text-gray-400 uppercase block">ADVANCES</span>
-            <span className="text-sm font-extrabold text-[#00FF88] font-mono">78%</span>
-            <span className="text-[10px] text-gray-400 font-mono block">MARKET DEPTH</span>
-          </div>
-        </motion.div>
-      </motion.div>
-
+              {/* Animated Sparkline */}
+              <svg className="w-full h-5 mt-1 overflow-visible" viewBox="0 0 100 25">
+                <motion.path
+                  d={asset.sparkline}
+                  fill="none"
+                  stroke={asset.strokeColor}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 1.4, delay: asset.delay + 0.3 }}
+                />
+              </svg>
+            </motion.div>
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
 
 export default HudGlassCards;
+

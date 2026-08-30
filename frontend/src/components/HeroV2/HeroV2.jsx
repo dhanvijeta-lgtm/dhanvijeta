@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaPlay, FaArrowRight } from 'react-icons/fa';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { FaPlay, FaArrowRight, FaCoins, FaEthereum, FaGem, FaBitcoin } from 'react-icons/fa';
 
 import LiveClock from './LiveClock';
 import DigitalGlobe from './DigitalGlobe';
@@ -10,8 +10,21 @@ import CandlestickChart from './CandlestickChart';
 import TechnicalOverlay from './TechnicalOverlay';
 import HudGlassCards from './HudGlassCards';
 
+const MOBILE_CARDS = [
+  { name: 'GOLD', price: '₹7,245.60', change: '+0.78%', icon: FaCoins, color: '#f59e0b' },
+  { name: 'ETHEREUM', price: '₹1,82,540.30', change: '+2.35%', icon: FaEthereum, color: '#00e5ff' },
+  { name: 'SILVER', price: '₹89.65', change: '+0.56%', icon: FaGem, color: '#e2e8f0' },
+  { name: 'BITCOIN', price: '₹63,45,210.80', change: '+1.62%', icon: FaBitcoin, color: '#f59e0b' },
+];
+
 export function HeroV2() {
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
+
+  // Scroll reaction for 3D Globe depth scaling
+  const { scrollY } = useScroll();
+  const globeScale = useTransform(scrollY, [0, 600], [1, 0.82]);
+  const globeOpacity = useTransform(scrollY, [0, 500], [1, 0.45]);
+  const globeY = useTransform(scrollY, [0, 600], [0, 80]);
 
   const handlePointerMove = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -38,18 +51,21 @@ export function HeroV2() {
       onTouchMove={handleTouchMove}
       onMouseLeave={handlePointerLeave}
       onTouchEnd={handlePointerLeave}
-      className="relative w-screen left-[50%] right-[50%] -mx-[50vw] min-h-[90vh] lg:min-h-screen bg-[#030810] overflow-hidden select-none flex flex-col justify-between pt-4 pb-8"
+      className="relative w-screen left-[50%] right-[50%] -mx-[50vw] min-h-[95vh] lg:min-h-screen bg-[#030810] overflow-hidden select-none flex flex-col justify-between pt-4 pb-8"
     >
-      {/* 3D ENVIRONMENT LAYERS */}
-      <DigitalGlobe pointer={pointer} />
+      {/* 3D ENVIRONMENT LAYERS WITH SCROLL TRANSFORM */}
+      <motion.div style={{ scale: globeScale, opacity: globeOpacity, y: globeY }} className="absolute inset-0 z-[1] pointer-events-none">
+        <DigitalGlobe pointer={pointer} />
+      </motion.div>
+
       <AuroraWaveTerrain pointer={pointer} />
       <CandlestickChart pointer={pointer} />
       <TechnicalOverlay pointer={pointer} />
       <HudGlassCards pointer={pointer} />
 
       {/* Ambient Radial Illumination */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#030710]/90 via-transparent to-[#030710] pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(3,7,16,0.88)_100%)] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#030710]/85 via-transparent to-[#030710] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(3,7,16,0.90)_100%)] pointer-events-none z-0" />
 
       {/* TOP STATUS BAR */}
       <div className="relative z-20 px-4 sm:px-12 lg:px-16 max-w-[1500px] mx-auto w-full flex items-center justify-between pointer-events-none">
@@ -91,25 +107,45 @@ export function HeroV2() {
           className="w-full max-w-2xl text-left space-y-4 sm:space-y-6"
         >
           {/* Eyebrow */}
-          <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] sm:tracking-[0.25em] text-amber-400 font-bold block">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] sm:tracking-[0.25em] text-amber-400 font-bold block"
+          >
             FINANCIAL INTELLIGENCE & TRADING MASTERY
-          </span>
+          </motion.span>
 
           {/* Headline */}
-          <h1 className="text-3xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.08]">
+          <motion.h1
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-3xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.08]"
+          >
             MASTER THE <br />
             <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(245,158,11,0.55)]">
               MARKET
             </span>
-          </h1>
+          </motion.h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-2xl text-gray-300 font-light leading-relaxed">
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-base sm:text-2xl text-gray-300 font-light leading-relaxed"
+          >
             Learn. Analyze. Trade.
-          </p>
+          </motion.p>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2"
+          >
             <Link
               to="/courses"
               className="group bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-400 hover:from-amber-500 hover:to-yellow-300 text-[#030710] font-black px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl shadow-[0_0_35px_rgba(245,158,11,0.5)] flex items-center gap-2.5 transition duration-300 transform hover:scale-[1.03] text-sm sm:text-base"
@@ -124,6 +160,29 @@ export function HeroV2() {
               <FaPlay size={12} className="text-amber-400" />
               <span>Watch Demo</span>
             </Link>
+          </motion.div>
+
+          {/* MOBILE DEDICATED MARKET CARDS STRIP */}
+          <div className="block lg:hidden pt-4 pointer-events-auto">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+              {MOBILE_CARDS.map((card) => {
+                const IconComponent = card.icon;
+                return (
+                  <div
+                    key={card.name}
+                    className="min-w-[150px] bg-[#090d16]/85 border border-white/10 rounded-xl p-3 backdrop-blur-md flex-shrink-0"
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 mb-1">
+                      <span className="flex items-center gap-1.5 font-bold" style={{ color: card.color }}>
+                        <IconComponent size={11} /> {card.name}
+                      </span>
+                    </div>
+                    <div className="text-sm font-bold text-white font-mono">{card.price}</div>
+                    <div className="text-[10px] text-[#00e5a0] font-mono">{card.change}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </motion.div>
       </div>
@@ -140,3 +199,4 @@ export function HeroV2() {
 }
 
 export default HeroV2;
+
