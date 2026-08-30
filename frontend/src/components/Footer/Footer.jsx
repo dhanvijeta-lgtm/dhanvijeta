@@ -19,16 +19,16 @@ export function Footer() {
             Empowering retail traders and investors with deep, structured, and actionable financial education. Learn Price Action, Trading Psychology, Options, Futures, and Wealth Management.
           </p>
           <div className="flex gap-4 mt-2">
-            <a href="https://youtube.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-red-500 transition">
+            <a href="https://www.youtube.com/@DhanVijeta" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-red-500 transition">
               <FaYoutube size={22} />
             </a>
-            <a href="https://telegram.org" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-sky-400 transition">
+            <a href="https://t.me/dhanvijeta" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-sky-400 transition">
               <FaTelegramPlane size={22} />
             </a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-500 transition">
+            <a href="https://www.instagram.com/dhanvijeta" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-500 transition">
               <FaInstagram size={22} />
             </a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition">
+            <a href="https://www.youtube.com/@DhanVijeta" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition">
               <FaTwitter size={22} />
             </a>
           </div>
@@ -49,9 +49,9 @@ export function Footer() {
         <div>
           <h4 className="text-sm font-semibold uppercase text-finance-gold tracking-wider mb-4">Contact Info</h4>
           <div className="flex flex-col gap-2.5 text-sm text-gray-400">
-            <p>Email: contact@dhanvijeta.com</p>
-            <p>WhatsApp Support: +91 98765 43210</p>
-            <p>Office: Financial District, Gachibowli, Hyderabad, India</p>
+            <p>Email: tradesetting1m@gmail.com</p>
+            <p>Telegram: t.me/dhanvijeta</p>
+            <p>Niche: Smart Money Concepts (SMC) & Forex Analysis</p>
           </div>
         </div>
 
@@ -60,12 +60,12 @@ export function Footer() {
           <h4 className="text-sm font-semibold uppercase text-finance-gold tracking-wider mb-4">YouTube Metrics</h4>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-center">
-              <span className="block text-lg font-bold text-finance-emerald">500K+</span>
+              <span className="block text-lg font-bold text-finance-emerald">5.19K+</span>
               <span className="text-[10px] text-gray-500 uppercase tracking-wider">Subscribers</span>
             </div>
             <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-center">
-              <span className="block text-lg font-bold text-finance-emerald">15M+</span>
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider">Total Views</span>
+              <span className="block text-lg font-bold text-finance-emerald">26+</span>
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider">Video Tutorials</span>
             </div>
           </div>
         </div>

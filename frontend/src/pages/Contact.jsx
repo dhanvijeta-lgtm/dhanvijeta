@@ -51,17 +51,7 @@ export function Contact() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white">Support Email</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">contact@dhanvijeta.com</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start">
-                <div className="bg-white/5 p-3 rounded-xl text-finance-emerald">
-                  <FaWhatsapp size={18} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white">WhatsApp Support</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">+91 98765 43210 (Mon-Sat, 9AM-6PM)</p>
+                  <p className="text-xs text-gray-400 mt-0.5">tradesetting1m@gmail.com</p>
                 </div>
               </div>
 
@@ -70,8 +60,18 @@ export function Contact() {
                   <FaTelegram size={18} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Telegram Helpdesk</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">@DhanVijetaSupportBot</p>
+                  <h4 className="text-sm font-bold text-white">Telegram Channel</h4>
+                  <p className="text-xs text-gray-400 mt-0.5">t.me/dhanvijeta</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="bg-white/5 p-3 rounded-xl text-finance-emerald">
+                  <FaWhatsapp size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Community & Updates</h4>
+                  <p className="text-xs text-gray-400 mt-0.5">Smart Money Concepts & Forex Analysis</p>
                 </div>
               </div>
 

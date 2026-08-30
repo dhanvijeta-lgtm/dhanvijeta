@@ -7,32 +7,32 @@ export function Home() {
   const [openFaq, setOpenFaq] = useState(null);
 
   const stats = [
-    { label: 'YouTube Subscribers', value: '500K+' },
-    { label: 'Students Trained', value: '15,000+' },
-    { label: 'Success Rate', value: '94.8%' },
-    { label: 'Courses Offered', value: '8+' }
+    { label: 'YouTube Subscribers', value: '5.19K+' },
+    { label: 'Video Lectures', value: '26+' },
+    { label: 'SMC & Price Action', value: '100%' },
+    { label: 'Trader Feedback', value: '98%' }
   ];
 
   const features = [
     {
       icon: <FaChartLine className="text-finance-gold" size={24} />,
-      title: 'Advanced Technical Analysis',
-      desc: 'Learn high-probability price action patterns, advanced indicators, and structural market cycles.'
+      title: 'Smart Money Concepts (SMC)',
+      desc: 'Master market structure mapping, Break of Structure (BOS), Change of Character (CHoCH), and Inducement (IDM).'
     },
     {
       icon: <FaGraduationCap className="text-finance-emerald" size={24} />,
-      title: 'Structured Curriculum',
-      desc: 'From absolute beginner modules to professional futures and options strategies compiled logically.'
+      title: 'Liquidity & Order Blocks',
+      desc: 'Learn how liquidity sweeps work, identifying high-probability supply & demand order blocks on live charts.'
     },
     {
       icon: <FaShieldAlt className="text-finance-rose" size={24} />,
-      title: 'Risk Management',
-      desc: 'Master trade sizing, stop-loss placement, and emotional control to protect trading capital.'
+      title: 'Risk & Trade Sizing',
+      desc: 'Protect trading capital with strict position sizing, stop-loss calculations, and psychological control.'
     },
     {
       icon: <FaUsers className="text-sky-400" size={24} />,
-      title: 'Live Trade Reviews',
-      desc: 'Step-by-step breakdowns of real market setups, backtesting drills, and batch community support.'
+      title: 'Gold & Forex Market Analysis',
+      desc: 'Weekly bias and setup breakdowns for XAUUSD (Gold) and Bitcoin, plus Prop Firm evaluation strategies.'
     }
   ];
 

@@ -6,61 +6,60 @@ import { FaRegCalendarAlt, FaUser, FaArrowLeft } from 'react-icons/fa';
 
 // Fallback details mapping
 const fallbackDetails = {
-  'understanding-price-action': {
-    title: 'Understanding Price Action: The Key to Professional Trading',
-    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80',
-    author: 'Dhan Vijeta Team',
-    publishedDate: '2026-07-15T08:00:00.000Z',
-    tags: ['Price Action', 'Technical Analysis'],
+  'smc-structure-mapping-bos-choch-idm': {
+    title: 'SMC Structure Mapping: BOS, CHoCH & Inducement Explained',
+    thumbnail: 'https://img.youtube.com/vi/JxMy7Dk9cCw/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    publishedDate: '2026-08-01T08:00:00.000Z',
+    tags: ['Smart Money Concepts', 'Price Action'],
     content: `
-      <h2>The Core of Price Action Trading</h2>
-      <p>Price action trading is the methodology of making all trading decisions based purely on the movement of prices on a chart, rather than relying on lagging indicators. In its essence, it assumes that all market information, news, and fundamentals are already discounted and reflected inside the price charts.</p>
+      <h2>Smart Money Concepts (SMC) Structure Mapping</h2>
+      <p>Structure mapping is the foundation of Smart Money Concepts (SMC). Before placing any trade, you must identify whether the market is making true higher highs or inducing retail traders into early entries.</p>
       
-      <h3>1. Candlestick Patterns Speak Volumes</h3>
-      <p>Candlestick shapes are visual summaries of the battle between buyers and sellers within a specific timeframe. The length of the wick reveals rejection. A long lower wick means buyers pushed prices back up before the close, suggesting bullish strength. A long upper wick indicates selling pressure at highs.</p>
+      <h3>1. Inducement (IDM) – The Retail Trap</h3>
+      <p>Inducement is the internal pullback high or low that entices retail traders to enter prematurely. Smart money takes out the inducement liquidity before initiating the real trend move.</p>
 
-      <h3>2. Support and Resistance Zones</h3>
-      <p>Instead of single lines, professional traders look for zones. Support zones represent areas where demand overcomes supply, halting a down-move. Resistance zones show selling supply overcoming buying demand. Trading near these zones ensures low-risk setups.</p>
+      <h3>2. Break of Structure (BOS) vs Change of Character (CHoCH)</h3>
+      <p><b>BOS (Break of Structure):</b> Occurs when the trend continues in its primary direction by closing body candle past the recent structural swing high/low.</p>
+      <p><b>CHoCH (Change of Character):</b> The first sign of a potential trend reversal when price breaks the major pullback swing point.</p>
 
-      <h3>3. Trend Identification and Structure</h3>
-      <p>A bullish structure consists of higher highs and higher lows. A bearish structure consists of lower highs and lower lows. Trading in alignment with the structure gives high probabilities of success.</p>
+      <h3>3. Valid vs Invalid Swings</h3>
+      <p>A swing high or low is only valid if it takes out the preceding inducement (IDM). Never mark a BOS without confirming IDM grab first.</p>
     `
   },
-  'how-to-control-emotions-trading': {
-    title: 'How to Control Your Emotions in Trading | Psychology Hacks',
-    thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&auto=format&fit=crop&q=80',
-    author: 'Dhan Vijeta Team',
-    publishedDate: '2026-07-10T10:30:00.000Z',
-    tags: ['Psychology', 'Risk Management'],
+  'liquidity-sweeps-ict-smc-guide': {
+    title: 'Liquidity Sweeps & Order Blocks: ICT + SMC Complete Guide',
+    thumbnail: 'https://img.youtube.com/vi/9MjP-4EumQQ/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    publishedDate: '2026-07-20T10:30:00.000Z',
+    tags: ['Liquidity', 'ICT & SMC'],
     content: `
-      <h2>Why Psychology Dominates Trading</h2>
-      <p>It is often said that trading is 10% strategy, 20% risk management, and 70% psychology. A trader with a 40% win-rate but strict emotional control will make money, while a trader with a 90% win-rate but poor discipline will blow their account in a single day.</p>
+      <h2>Understanding Institutional Liquidity</h2>
+      <p>Smart money institutions require massive volume to execute their multi-million dollar positions. They create artificial resistance and support levels to accumulate retail stop-losses.</p>
       
-      <h3>1. The Fear of Missing Out (FOMO)</h3>
-      <p>FOMO is the force that makes traders jump into a stock after it has already run up 10%. By trading at the peak of the momentum, you risk buying the high. The hack: Always wait for pullbacks to valid support levels before entering.</p>
+      <h3>1. Buy-Side & Sell-Side Liquidity</h3>
+      <p><b>BSL (Buy-Side Liquidity):</b> Resting buy-stop orders sitting above equal highs or swing highs.</p>
+      <p><b>SSL (Sell-Side Liquidity):</b> Resting sell-stop orders placed under equal lows or key support levels.</p>
 
-      <h3>2. Revenge Trading</h3>
-      <p>After a loss, the natural reaction is to get your money back. This triggers overtrading and larger, emotional trade sizes. The hack: Define a maximum daily loss limit. If reached, shut down the platform immediately.</p>
-
-      <h3>3. Over-Leveraging</h3>
-      <p>Taking positions that are too large creates high stress, forcing you to exit correct setups at the minor pullbacks. Rule of thumb: Never risk more than 1-2% of your account capital on any single setup.</p>
+      <h3>2. Order Block Selection</h3>
+      <p>An Order Block (OB) is the last opposite-colored candle before an aggressive expansion move that creates Imbalance (Fair Value Gap / FVG) and sweeps liquidity.</p>
     `
   },
-  'swing-trading-vs-day-trading': {
-    title: 'Swing Trading vs. Day Trading: Which System Suits You?',
-    thumbnail: 'https://images.unsplash.com/photo-1621262740976-903c7e73385d?w=800&auto=format&fit=crop&q=80',
-    author: 'Dhan Vijeta Team',
-    publishedDate: '2026-07-01T14:15:00.000Z',
-    tags: ['Trading Rules', 'Swing Trading'],
+  'funded-room-prop-firm-evaluation-guide': {
+    title: 'Prop Firm Evaluation Guide: Passing 1-Step & 2-Step Challenges',
+    thumbnail: 'https://img.youtube.com/vi/RevtKQMMeAk/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    publishedDate: '2026-07-05T14:15:00.000Z',
+    tags: ['Prop Firm', 'Risk Management'],
     content: `
-      <h2>Which Trading Style Fits Your Schedule?</h2>
-      <p>Understanding whether you should be a Day Trader or a Swing Trader is critical to aligning your career goals with your lifestyle and time constraints.</p>
+      <h2>Passing Prop Firm Accounts with Strict Risk Rules</h2>
+      <p>Prop firms like The Funded Room give traders access to virtual capital up to $200,000. However, 95% of traders fail evaluations due to over-leveraging and emotional trade management.</p>
       
-      <h3>Day Trading (Intraday)</h3>
-      <p>Day trading involves opening and closing all positions within the same trading session. There is zero overnight risk. However, it requires constant screen time, rapid decision making, and quick reflexes.</p>
+      <h3>1. The 1% Risk Rule</h3>
+      <p>Never risk more than 0.5% to 1% of the total account balance per trade. If your daily loss limit is 5%, losing 10 trades back-to-back at 0.5% will still keep your account safe.</p>
 
-      <h3>Swing Trading</h3>
-      <p>Swing trading is holding trades for days or weeks to capture short-to-medium-term price momentum. It requires only 30 minutes of daily analysis and works perfectly for corporate employees. The trades are slower and require wider stop-losses.</p>
+      <h3>2. High Probability Setup Selection</h3>
+      <p>Only enter when higher timeframe bias (SMC structure), Order Block, and Liquidity Sweep align seamlessly.</p>
     `
   }
 };

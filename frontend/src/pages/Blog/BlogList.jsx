@@ -8,33 +8,33 @@ import { FaRegClock, FaUser, FaRegCalendarAlt } from 'react-icons/fa';
 const fallbackBlogs = [
   {
     _id: 'b1',
-    title: 'Understanding Price Action: The Key to Professional Trading',
-    slug: 'understanding-price-action',
-    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=60',
-    author: 'Dhan Vijeta Team',
-    tags: ['Price Action', 'Technical Analysis'],
-    publishedDate: '2026-07-15T08:00:00.000Z',
-    seoMeta: { description: 'Master price structures and support/resistance rules.' }
+    title: 'SMC Structure Mapping: BOS, CHoCH & Inducement Explained',
+    slug: 'smc-structure-mapping-bos-choch-idm',
+    thumbnail: 'https://img.youtube.com/vi/JxMy7Dk9cCw/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    tags: ['Smart Money Concepts', 'Price Action'],
+    publishedDate: '2026-08-01T08:00:00.000Z',
+    seoMeta: { description: 'Master market structure mapping using Smart Money Concepts. Learn how to identify valid Break of Structure (BOS), Change of Character (CHoCH), and Inducement (IDM).' }
   },
   {
     _id: 'b2',
-    title: 'How to Control Your Emotions in Trading | Psychology Hacks',
-    slug: 'how-to-control-emotions-trading',
-    thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=500&auto=format&fit=crop&q=60',
-    author: 'Dhan Vijeta Team',
-    tags: ['Psychology', 'Risk Management'],
-    publishedDate: '2026-07-10T10:30:00.000Z',
-    seoMeta: { description: 'Trading discipline is more important than indicators. Learn rules.' }
+    title: 'Liquidity Sweeps & Order Blocks: ICT + SMC Complete Guide',
+    slug: 'liquidity-sweeps-ict-smc-guide',
+    thumbnail: 'https://img.youtube.com/vi/9MjP-4EumQQ/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    tags: ['Liquidity', 'ICT & SMC'],
+    publishedDate: '2026-07-20T10:30:00.000Z',
+    seoMeta: { description: '90% of traders fall into liquidity traps. Learn how institutional liquidity grabs work and how to enter after liquidity sweeps.' }
   },
   {
     _id: 'b3',
-    title: 'Swing Trading vs. Day Trading: Which System Suits You?',
-    slug: 'swing-trading-vs-day-trading',
-    thumbnail: 'https://images.unsplash.com/photo-1621262740976-903c7e73385d?w=500&auto=format&fit=crop&q=60',
-    author: 'Dhan Vijeta Team',
-    tags: ['Trading Rules', 'Swing Trading'],
-    publishedDate: '2026-07-01T14:15:00.000Z',
-    seoMeta: { description: 'Compare trading styles, capital requirements, and timelines.' }
+    title: 'Prop Firm Evaluation Guide: Passing 1-Step & 2-Step Challenges',
+    slug: 'funded-room-prop-firm-evaluation-guide',
+    thumbnail: 'https://img.youtube.com/vi/RevtKQMMeAk/hqdefault.jpg',
+    author: 'Dhan Vijeta',
+    tags: ['Prop Firm', 'Risk Management'],
+    publishedDate: '2026-07-05T14:15:00.000Z',
+    seoMeta: { description: 'Step-by-step guide to passing funded prop firm evaluation accounts like The Funded Room using strict 1% risk management protocols.' }
   }
 ];
 

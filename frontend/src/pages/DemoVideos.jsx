@@ -7,27 +7,67 @@ import { FaSearch, FaPlay, FaVideo } from 'react-icons/fa';
 const fallbackDemos = [
   {
     _id: 'd1',
-    title: 'Price Action Trading Masterclass | Complete Course',
-    description: 'Learn support/resistance, candlestick anatomy, trend lines, and how to spot breakout trades with high risk-to-reward ratios.',
-    videoUrl: 'https://www.youtube.com/embed/nOHs2t4-a8E',
-    category: 'Price Action',
-    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500&auto=format&fit=crop&q=60'
+    title: '🔥 FX Pro Indicator – REAL 1 WEEK BACKTEST ON GOLD (XAUUSD)',
+    description: 'Real 1 week backtest results of FX Pro indicator on Gold (XAUUSD). Learn how to analyze indicator accuracy for intraday & swing setups.',
+    videoUrl: 'https://www.youtube.com/embed/OmMHWD2iL1o',
+    category: 'Forex & Indicators',
+    thumbnail: 'https://img.youtube.com/vi/OmMHWD2iL1o/hqdefault.jpg'
   },
   {
     _id: 'd2',
-    title: 'Options Trading Beginner Course | Call & Put Explained',
-    description: 'An introductory class explaining options contracts, strike prices, premiums, call options, and put options for complete beginners.',
-    videoUrl: 'https://www.youtube.com/embed/L1c9-Q2W174',
-    category: 'Options Trading',
-    thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=500&auto=format&fit=crop&q=60'
+    title: 'BOS, CHoCH, IDM Explained on Real Chart 💯 | SMC Hindi Course EP-2',
+    description: 'Learn Break of Structure (BOS), Change of Character (CHoCH), and Inducement (IDM) on live charts. Master valid vs invalid swing points.',
+    videoUrl: 'https://www.youtube.com/embed/JxMy7Dk9cCw',
+    category: 'Smart Money Concepts',
+    thumbnail: 'https://img.youtube.com/vi/JxMy7Dk9cCw/hqdefault.jpg'
   },
   {
     _id: 'd3',
-    title: 'Risk Management Strategy: How to Size Your Trades',
-    description: 'Stop losing your trading account. Understand position sizing, risk per trade limits, win rates, and how to calculate risk metrics.',
-    videoUrl: 'https://www.youtube.com/embed/L3A19rTj42k',
-    category: 'Psychology',
-    thumbnail: 'https://images.unsplash.com/photo-1621262740976-903c7e73385d?w=500&auto=format&fit=crop&q=60'
+    title: 'SMC Lecture EP-1 🚀 Market Structure A to Z Explained for Beginners',
+    description: 'Complete A to Z beginner guide on market structure, trend identification, and higher timeframe bias by Dhan Vijeta.',
+    videoUrl: 'https://www.youtube.com/embed/rsUKHQeMm64',
+    category: 'Smart Money Concepts',
+    thumbnail: 'https://img.youtube.com/vi/rsUKHQeMm64/hqdefault.jpg'
+  },
+  {
+    _id: 'd4',
+    title: 'Liquidity Ka Complete Knowledge 🔥 90% TRADERS don\'t know !',
+    description: 'Understand liquidity pools, buy-side & sell-side liquidity grabs, and ICT + SMC liquidity sweeps before entering high-probability trades.',
+    videoUrl: 'https://www.youtube.com/embed/9MjP-4EumQQ',
+    category: 'Liquidity & Price Action',
+    thumbnail: 'https://img.youtube.com/vi/9MjP-4EumQQ/hqdefault.jpg'
+  },
+  {
+    _id: 'd5',
+    title: 'The Funded Room Prop Firm Full Guide 🔥 | Account Kaise Buy Kare?',
+    description: 'Complete step-by-step guide to passing funded prop firm evaluation challenges (1 step & 2 step) with real risk management rules.',
+    videoUrl: 'https://www.youtube.com/embed/RevtKQMMeAk',
+    category: 'Prop Firm Guide',
+    thumbnail: 'https://img.youtube.com/vi/RevtKQMMeAk/hqdefault.jpg'
+  },
+  {
+    _id: 'd6',
+    title: 'Best Forex Broker 2026 🔥 | Vantage vs Exness vs XM vs Pepperstone',
+    description: 'Detailed comparison of top Forex brokers (Vantage, Exness, XM, Pepperstone) analyzing spreads, leverage, deposit/withdrawal speed, and regulations.',
+    videoUrl: 'https://www.youtube.com/embed/iaVnDgMORjo',
+    category: 'Broker Comparison',
+    thumbnail: 'https://img.youtube.com/vi/iaVnDgMORjo/hqdefault.jpg'
+  },
+  {
+    _id: 'd7',
+    title: 'XAUUSD & Bitcoin Next Week Bias 🔥 | CRT Candle Analysis',
+    description: 'Weekly bias and key price action setups for Gold (XAUUSD) and Bitcoin using Candle Range Theory (CRT).',
+    videoUrl: 'https://www.youtube.com/embed/1ltlnK8BEFg',
+    category: 'Market Analysis',
+    thumbnail: 'https://img.youtube.com/vi/1ltlnK8BEFg/hqdefault.jpg'
+  },
+  {
+    _id: 'd8',
+    title: 'HOW TO START TRADING FROM BASIC | TRADING ROAD MAP FOR BEGINNERS',
+    description: 'Step-by-step trading roadmap for absolute beginners covering technical analysis, risk management, and psychology.',
+    videoUrl: 'https://www.youtube.com/embed/AEWJVOcL_r0',
+    category: 'Beginner Roadmap',
+    thumbnail: 'https://img.youtube.com/vi/AEWJVOcL_r0/hqdefault.jpg'
   }
 ];
 
